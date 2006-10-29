@@ -10,6 +10,7 @@
 
 // Forward Declarations
 class FileReader;
+class FileReaderNonUnicode;
 
 // Contains information about one icon that lives on the desktop.
 //
@@ -59,6 +60,8 @@ public:
    // true on success, false if the FileReader couldn't
    // supply enough input (for the "last in the file" case)
    bool Deserialize(FileReader *fr);
+   bool DeserializeNonUnicode(FileReaderNonUnicode *fr);
+
    std::wstring Serialize() const;
 
 private:

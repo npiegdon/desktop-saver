@@ -25,7 +25,8 @@ DesktopSaver::DesktopSaver(wstring app_name)
    m_rate = read_poll_rate();
 
    // Set the location of the history file by starting with a default
-   m_history_filename = L"icon_history.txt";
+   m_history_filename_ANSI = L"icon_history.txt";
+   m_history_filename_UNICODE = L"icon_history_2.txt";
 
    // Add the shell folder path if we've got one
    TCHAR sh_path[MAX_PATH];
@@ -40,7 +41,8 @@ DesktopSaver::DesktopSaver(wstring app_name)
       wstring path = WSTRING(sh_path << L"\\DesktopSaver\\");
       SHCreateDirectoryEx(0, path.c_str(), 0);
 
-      m_history_filename = path + m_history_filename;
+      m_history_filename_ANSI = path + m_history_filename_ANSI;
+      m_history_filename_UNICODE = path + m_history_filename_UNICODE;
    }
 
    // Load our previous icon history file
@@ -55,19 +57,54 @@ DesktopSaver::DesktopSaver(wstring app_name)
 
 void DesktopSaver::deserialize()
 {
-   FileReader fr(m_history_filename);
-
    // knock out our old history and named profile list
    m_history_list = HistoryList();
    m_named_profile_list = HistoryList();
 
-   // Read in IconHistory objects until one fails to load
-   IconHistory h(false);
-   while (h.Deserialize(&fr))
+   // We support the older ANSI version of the icon history list.
+   // After importing it once, we delete it.
+   WIN32_FIND_DATA find_ansi;
+   HANDLE hFind;
+   hFind = FindFirstFile(m_history_filename_ANSI.c_str(), &find_ansi);
+   if (hFind != INVALID_HANDLE_VALUE) 
    {
-      if (h.IsNamedProfile()) m_named_profile_list.push_back(h);
-      else m_history_list.push_back(h);
+      FindClose(hFind);
+
+      // Force the file reader out of scope so it will
+      // close the file immediately
+      {
+         FileReaderNonUnicode fr(m_history_filename_ANSI);
+
+         // Read in IconHistory objects until one fails to load
+         IconHistory h(false);
+         while (h.DeserializeNonUnicode(&fr))
+         {
+            if (h.IsNamedProfile()) m_named_profile_list.push_back(h);
+            else m_history_list.push_back(h);
+         }
+      }
+
+      // Immediately write out a new Unicode version of
+      // the icon history and then rename the old ANSI one.
+      serialize();
+
+      const wstring backup_filename = WSTRING(m_history_filename_ANSI << L".bak");
+      DeleteFile(backup_filename.c_str());
+      MoveFile(m_history_filename_ANSI.c_str(), backup_filename.c_str());
+   } 
+   else 
+   {
+      FileReader fr(m_history_filename_UNICODE);
+
+      // Read in IconHistory objects until one fails to load
+      IconHistory h(false);
+      while (h.Deserialize(&fr))
+      {
+         if (h.IsNamedProfile()) m_named_profile_list.push_back(h);
+         else m_history_list.push_back(h);
+      }
    }
+
 }
 
 void DesktopSaver::serialize() const
@@ -82,20 +119,20 @@ void DesktopSaver::serialize() const
    // NOTE: The multi-byte output requires this
    const static wstring end = L"\r\n";
 
-   file.open(m_history_filename.c_str(), ios::out | ios::binary);
+   file.open(m_history_filename_UNICODE.c_str(), ios::out | ios::binary);
 
    if (!file.good())
    {
       STANDARD_ERROR(L"Could not save icon position information to the file:" << endl
-         << m_history_filename << endl << endl << L"Check that you have write access to"
+         << m_history_filename_UNICODE << endl << endl << L"Check that you have write access to"
          << L" that location and that the file isn't in use.");
 
       exit(1);
    }
 
-   file << L"#" << end;
-   file << L"# " << m_app_name << L" " << DESKTOPSAVER_VERSION << L" icon history file" << end;
-   file << L"#" << end;
+   file << L":" << end;
+   file << L": " << m_app_name << L" " << DESKTOPSAVER_VERSION << L" icon history file" << end;
+   file << L":" << end;
    file << end;
 
    for (HistoryIter i = m_history_list.begin(); i != m_history_list.end(); ++i)
@@ -107,7 +144,7 @@ void DesktopSaver::serialize() const
    if (!file.good())
    {
       STANDARD_ERROR(L"Could not save icon position information to the file:" << endl
-         << m_history_filename << endl << endl << L"A problem occurred during write.");
+         << m_history_filename_UNICODE << endl << endl << L"A problem occurred during write.");
 
       exit(1);
    }
@@ -183,9 +220,9 @@ IconHistory DesktopSaver::get_desktop(bool named_profile)
    if (explorer == NULL) return snapshot;
 
    // Allocate some shared memory for message passing
-   void *remote_pos  =                    VirtualAllocEx(explorer, NULL, sizeof(POINT),             MEM_COMMIT, PAGE_READWRITE);
-   void *remote_item =                    VirtualAllocEx(explorer, NULL, sizeof(LVITEM),            MEM_COMMIT, PAGE_READWRITE);
-   char *remote_text = static_cast<char*>(VirtualAllocEx(explorer, NULL, sizeof(char)*(MAX_PATH+1), MEM_COMMIT, PAGE_READWRITE));
+   void    *remote_pos  =                       VirtualAllocEx(explorer, NULL, sizeof(POINT),                MEM_COMMIT, PAGE_READWRITE);
+   void    *remote_item =                       VirtualAllocEx(explorer, NULL, sizeof(LVITEM),               MEM_COMMIT, PAGE_READWRITE);
+   wchar_t *remote_text = static_cast<wchar_t*>(VirtualAllocEx(explorer, NULL, sizeof(wchar_t)*(MAX_PATH+1), MEM_COMMIT, PAGE_READWRITE));
 
    // Grab each one of the icons from the desktop
    for (unsigned long i = 0; i < icon_count; ++i)
@@ -293,8 +330,8 @@ void DesktopSaver::RestoreHistory(IconHistory history)
    if (explorer == NULL) return;
 
    // Allocate some shared memory for message passing
-   void *remote_item =                    VirtualAllocEx(explorer, NULL, sizeof(LVITEM),            MEM_COMMIT, PAGE_READWRITE);
-   char *remote_text = static_cast<char*>(VirtualAllocEx(explorer, NULL, sizeof(char)*(MAX_PATH+1), MEM_COMMIT, PAGE_READWRITE));
+   void    *remote_item =                       VirtualAllocEx(explorer, NULL, sizeof(LVITEM),               MEM_COMMIT, PAGE_READWRITE);
+   wchar_t *remote_text = static_cast<wchar_t*>(VirtualAllocEx(explorer, NULL, sizeof(wchar_t)*(MAX_PATH+1), MEM_COMMIT, PAGE_READWRITE));
 
    for (unsigned long i = 0; i < icon_count; ++i)
    {

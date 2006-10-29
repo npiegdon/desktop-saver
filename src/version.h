@@ -7,6 +7,6 @@
 
 // This version number must be hand-set both here
 // and in the NSIS installer script.
-#define DESKTOPSAVER_VERSION L"2.0.2"
+#define DESKTOPSAVER_VERSION L"2.0.3"
 
 #endif

@@ -30,7 +30,7 @@ BOOL CALLBACK CreateDialogProc(HWND dialog_hwnd, UINT message, WPARAM wparam, LP
                // Grab text from control, allocate memory, and send back
                int length = (int)SendMessage(edit, EM_LINELENGTH, 0, 0);
 
-               char *new_name = new char[length + 1];
+               wchar_t *new_name = new wchar_t[length + 1];
 
                // The EM_GETLINE message requires that you write the length
                // of the string in the first word of the buffer
@@ -69,8 +69,8 @@ wstring AskForNewProfileName(HINSTANCE hinst, HWND hwnd)
    if (ret == ProfileNameDialogCancelled) { return L""; }
 
    // Anything else returned ought to be a pointer to the new name
-   wstring name = WSTRING((char*)ret);
-   delete[] (char*)ret;
+   wstring name = WSTRING((wchar_t*)ret);
+   delete[] (wchar_t*)ret;
 
    return name;
 }

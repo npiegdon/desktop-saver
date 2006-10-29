@@ -78,7 +78,9 @@ private:
 
    std::wstring m_app_name;
 
-   std::wstring m_history_filename;
+   std::wstring m_history_filename_ANSI;
+   std::wstring m_history_filename_UNICODE;
+
    HistoryList m_history_list;
    HistoryList m_named_profile_list;
 };

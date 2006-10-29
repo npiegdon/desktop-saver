@@ -52,6 +52,16 @@ Polling takes about 2ms if no changes have been made to the desktop, and only 15
 CHANGE LOG
 ==========
 
+DesktopSaver 2.0.3:
+
+- Extra-long filenames are now truncated in the history list view.
+
+- Unicode desktop icon names and profile names are now supported.
+  (Remaining profile history from previous versions will be silently
+  backed up and upgraded.)
+
+------------------------------------------------------------------------------
+
 DesktopSaver 2.0.2:
 
 - Converted project files to use Microsoft Visual C++ 2005 Express Edition.

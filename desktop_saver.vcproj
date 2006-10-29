@@ -253,6 +253,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\string_util.h"
+					>
+				</File>
+				<File
 					RelativePath=".\src\tray_icon.cpp"
 					>
 				</File>
