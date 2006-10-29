@@ -1,0 +1,104 @@
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+#include <winresrc.h>
+
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include <winresrc.h>\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif
+
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_APP_ICON            ICON                    "../desktop_saver_icon.ico"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 2,0,0,0
+ PRODUCTVERSION 2,0,0,0
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "DesktopSaver is a Windows application that keeps track of desktop icon positions over time.  If your icon positions are disturbed (after a video resolution change, an explorer crash, changing video device settings, docking your laptop, etc) DesktopSaver can restore their positions in one click."
+            VALUE "FileDescription", "DesktopSaver"
+            VALUE "FileVersion", "2.0.0.0"
+            VALUE "InternalName", "DesktopSaver"
+            VALUE "LegalCopyright", "Copyright (c)2006 Nicholas Piegdon"
+            VALUE "OriginalFilename", "DesktopSaver"
+            VALUE "ProductName", "DesktopSaver"
+            VALUE "ProductVersion", "2.0.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+IDD_NEW_PROFILE DIALOGEX 0, 0, 230, 65
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_WINDOWEDGE
+CAPTION "DesktopSaver"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    LTEXT           "Choose a name for your new named profile:",IDC_QUESTION,
+                    7,7,216,14
+    EDITTEXT        IDC_NAME_BOX,7,22,216,14,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "&OK",IDOK,115,44,50,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,173,44,50,14
+END
+
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_NEW_PROFILE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 223
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 58
+    END
+END
+#endif
+
+#endif    // English (U.S.) resources
