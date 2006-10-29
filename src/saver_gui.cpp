@@ -45,8 +45,8 @@ map<HWND, DesktopSaverGui*> DesktopSaverGui::gui_lookup;
 
 DesktopSaverGui::DesktopSaverGui(HINSTANCE hinst)
 {
-   m_app_name = "DesktopSaver";
-   m_class_name = "desktop_saver";
+   m_app_name = L"DesktopSaver";
+   m_class_name = L"desktop_saver";
    m_hinstance = hinst;
 
    // Win32 Stuff
@@ -56,7 +56,7 @@ DesktopSaverGui::DesktopSaverGui(HINSTANCE hinst)
    wndclass.cbClsExtra = 0;
    wndclass.cbWndExtra = 0;
    wndclass.hInstance = hinst;
-   wndclass.hIcon = LoadIcon(hinst, "IDI_APP_ICON");
+   wndclass.hIcon = LoadIcon(hinst, L"IDI_APP_ICON");
    wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
    wndclass.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
    wndclass.lpszMenuName = NULL;
@@ -64,17 +64,17 @@ DesktopSaverGui::DesktopSaverGui(HINSTANCE hinst)
 
    if (!RegisterClass(&wndclass))
    {
-      INTERNAL_ERROR("Couldn't register the " << m_class_name << " window!");
+      INTERNAL_ERROR(L"Couldn't register the " << m_class_name << L" window!");
       exit(1);
    }
 
    gui_lookup[0] = this;
-   m_hwnd = CreateWindow(m_class_name.c_str(), STRING(m_app_name << " " << DESKTOPSAVER_VERSION).c_str(),
+   m_hwnd = CreateWindow(m_class_name.c_str(), WSTRING(m_app_name << L" " << DESKTOPSAVER_VERSION).c_str(),
       WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 350, 200, NULL, NULL, hinst, this);
 
    if (!m_hwnd)
    {
-      INTERNAL_ERROR("Couldn't create main program window!");
+      INTERNAL_ERROR(L"Couldn't create main program window!");
       exit(1);
    }
 
@@ -83,8 +83,8 @@ DesktopSaverGui::DesktopSaverGui(HINSTANCE hinst)
    UpdateWindow(m_hwnd);
 
    // Create the system tray icon
-   m_tray_icon = new TrayIcon(m_hwnd, WM_TRAYMESSAGE, LoadIcon(hinst, "IDI_APP_ICON"));
-   m_tray_icon->SetTooltip(STRING(m_app_name << " " << DESKTOPSAVER_VERSION));
+   m_tray_icon = new TrayIcon(m_hwnd, WM_TRAYMESSAGE, LoadIcon(hinst, L"IDI_APP_ICON"));
+   m_tray_icon->SetTooltip(WSTRING(m_app_name << L" " << DESKTOPSAVER_VERSION));
 
    m_saver = new DesktopSaver(m_app_name);
 
@@ -123,7 +123,7 @@ LRESULT CALLBACK DesktopSaverGui::proc(HWND hwnd, UINT message, WPARAM wparam, L
    DesktopSaverGui *gui = gui_lookup[hwnd];
    if (!gui)
    {
-      INTERNAL_ERROR("ERROR: Win32 message received before global Icon Saver instance created!");
+      INTERNAL_ERROR(L"ERROR: Win32 message received before global Icon Saver instance created!");
       exit(1);
    }
 
@@ -148,7 +148,7 @@ LRESULT CALLBACK DesktopSaverGui::proc(HWND hwnd, UINT message, WPARAM wparam, L
 LRESULT DesktopSaverGui::message_timer(WPARAM timer_id)
 {
    // This should never happen, but isn't necessarily a critical error
-   if (timer_id != m_timer_id) INTERNAL_ERROR("An unknown (external) timer event was received!");
+   if (timer_id != m_timer_id) INTERNAL_ERROR(L"An unknown (external) timer event was received!");
 
    m_saver->PollDesktopIcons();
 
@@ -179,7 +179,7 @@ LRESULT DesktopSaverGui::message_create(HWND hwnd)
    //          point!  Instead, use the passed-in hwnd from WndProc
 
    // Register that we want to know when explorer.exe recovers from a crash
-   m_taskbar_restart_message = RegisterWindowMessage(TEXT("TaskbarCreated"));
+   m_taskbar_restart_message = RegisterWindowMessage(L"TaskbarCreated");
 
    return 0;
 }
@@ -244,19 +244,19 @@ HMENU DesktopSaverGui::build_dynamic_menu()
 
    // Find out whether the run-at-startup options should be checked
    long registry_checked = (m_saver->GetRunOnStartup() ? MF_CHECKED : 0);
-   AppendMenu(options, MF_STRING | registry_checked, WM_Tray_On_Startup, "&Run at Startup");
+   AppendMenu(options, MF_STRING | registry_checked, WM_Tray_On_Startup, L"&Run at Startup");
 
    AppendMenu(options, MF_SEPARATOR, 0, 0);
 
    PollRate p = m_saver->GetPollRate();
 
    // Decide which of these gets the checkmark
-   AppendMenu(options, MF_STRING | (p==DisableHistory?MF_CHECKED:0), WM_Tray_Disable_History, "&Disable History");
-   AppendMenu(options, MF_STRING | (p==PollEndpoints?MF_CHECKED:0),  WM_Tray_Poll_Endpoints, "Poll at Startup and Shutdown only");
-   AppendMenu(options, MF_STRING | (p==Interval1?MF_CHECKED:0),      WM_Tray_Poll_Interval1, "Poll every 5 minutes");
-   AppendMenu(options, MF_STRING | (p==Interval2?MF_CHECKED:0),      WM_Tray_Poll_Interval2, "Poll every 20 minutes");
-   AppendMenu(options, MF_STRING | (p==Interval3?MF_CHECKED:0),      WM_Tray_Poll_Interval3, "Poll every 60 minutes");
-   AppendMenu(options, MF_STRING | (p==Interval4?MF_CHECKED:0),      WM_Tray_Poll_Interval4, "Poll every 360 minutes");
+   AppendMenu(options, MF_STRING | (p==DisableHistory?MF_CHECKED:0), WM_Tray_Disable_History, L"&Disable History");
+   AppendMenu(options, MF_STRING | (p==PollEndpoints?MF_CHECKED:0),  WM_Tray_Poll_Endpoints, L"Poll at Startup and Shutdown only");
+   AppendMenu(options, MF_STRING | (p==Interval1?MF_CHECKED:0),      WM_Tray_Poll_Interval1, L"Poll every 5 minutes");
+   AppendMenu(options, MF_STRING | (p==Interval2?MF_CHECKED:0),      WM_Tray_Poll_Interval2, L"Poll every 20 minutes");
+   AppendMenu(options, MF_STRING | (p==Interval3?MF_CHECKED:0),      WM_Tray_Poll_Interval3, L"Poll every 60 minutes");
+   AppendMenu(options, MF_STRING | (p==Interval4?MF_CHECKED:0),      WM_Tray_Poll_Interval4, L"Poll every 360 minutes");
 
    const HistoryList &named_profiles = m_saver->NamedProfiles();
 
@@ -281,7 +281,7 @@ HMENU DesktopSaverGui::build_dynamic_menu()
    const HistoryList &history = m_saver->History();
 
    // This shouldn't happen (but is non-critical)
-   if (history.size() > DesktopSaver::MaxIconHistoryCount) INTERNAL_ERROR("History List too long!");
+   if (history.size() > DesktopSaver::MaxIconHistoryCount) INTERNAL_ERROR(L"History List too long!");
 
    // If History is disabled, don't show the history list at all
    if (m_saver->GetPollRate() != DisableHistory)
@@ -297,7 +297,7 @@ HMENU DesktopSaverGui::build_dynamic_menu()
       // have any history slices to clear
       long additional_clear_flags = MF_GRAYED;
       if (history.size() > 0) additional_clear_flags = 0;
-      AppendMenu(menu, MF_STRING | additional_clear_flags, WM_Tray_History_Clear, "&Clear History");
+      AppendMenu(menu, MF_STRING | additional_clear_flags, WM_Tray_History_Clear, L"&Clear History");
 
       AppendMenu(menu, MF_SEPARATOR, 0, 0);
    }
@@ -319,16 +319,16 @@ HMENU DesktopSaverGui::build_dynamic_menu()
    }
 
    bool have_profiles = (named_profiles.size() > 0);
-   AppendMenu(menu, MF_STRING | (too_many_profiles?MF_GRAYED:0), WM_Tray_Profile_Create, "&Create New Named Profile...");
-   AppendMenu(menu, MF_STRING | MF_POPUP | (have_profiles?0:MF_GRAYED), (UINT_PTR)profile_update, "&Overwrite Named Profile");
-   AppendMenu(menu, MF_STRING | MF_POPUP | (have_profiles?0:MF_GRAYED), (UINT_PTR)profile_delete, "&Delete Named Profile");
+   AppendMenu(menu, MF_STRING | (too_many_profiles?MF_GRAYED:0), WM_Tray_Profile_Create, L"&Create New Named Profile...");
+   AppendMenu(menu, MF_STRING | MF_POPUP | (have_profiles?0:MF_GRAYED), (UINT_PTR)profile_update, L"&Overwrite Named Profile");
+   AppendMenu(menu, MF_STRING | MF_POPUP | (have_profiles?0:MF_GRAYED), (UINT_PTR)profile_delete, L"&Delete Named Profile");
 
    AppendMenu(menu, MF_SEPARATOR, 0, 0);
 
-   AppendMenu(menu, MF_STRING | MF_POPUP, (UINT_PTR)options, "&Options");
+   AppendMenu(menu, MF_STRING | MF_POPUP, (UINT_PTR)options, L"&Options");
 
    // Let them quit the program if they want  :)
-   AppendMenu(menu, MF_STRING, WM_Tray_Exit, "E&xit");
+   AppendMenu(menu, MF_STRING, WM_Tray_Exit, L"E&xit");
 
    return menu;
 }
@@ -339,8 +339,8 @@ LRESULT DesktopSaverGui::message_menu(WPARAM choice)
    {
    case WM_Tray_History_Clear:
       {
-         if (ASK_QUESTION("Are you sure you want to erase your icon position history?\n"
-            "(Your named profiles will remain intact)."))
+         if (ASK_QUESTION(L"Are you sure you want to erase your icon position history?\n"
+            L"(Your named profiles will remain intact)."))
          {
             m_saver->ClearHistory();
          }
@@ -359,25 +359,25 @@ LRESULT DesktopSaverGui::message_menu(WPARAM choice)
          // This option is only available if there aren't
          // too many named profiles already.
 
-         string name = AskForNewProfileName(m_hinstance, m_hwnd);
+         wstring name = AskForNewProfileName(m_hinstance, m_hwnd);
 
          // If the user presses cancel in the dialog (or just
          // leaves the box blank), it comes back empty.
-         if (name == "") break;
+         if (name == L"") break;
 
          // Check that this (case insensitive) name doesn't already exist.
          bool duplicate = false;
-         string duplicate_profile_name;
+         wstring duplicate_profile_name;
 
          const HistoryList history = m_saver->NamedProfiles();
          for (size_t i = 0; i < history.size(); ++i)
          {
-            string name_lower = name;
+            wstring name_lower = name;
             std::transform(name.begin(), name.end(), name_lower.begin(), tolower);
 
-            string other = history[i].GetName();
+            wstring other = history[i].GetName();
 
-            string other_lower = other;
+            wstring other_lower = other;
             std::transform(other.begin(), other.end(), other_lower.begin(), tolower);
 
             if (name_lower == other_lower)
@@ -390,7 +390,7 @@ LRESULT DesktopSaverGui::message_menu(WPARAM choice)
 
          if (duplicate)
          {
-            if (ASK_QUESTION("A profile with the name '" << duplicate_profile_name << "' already exists.  Overwrite?"))
+            if (ASK_QUESTION(L"A profile with the name '" << duplicate_profile_name << L"' already exists.  Overwrite?"))
             { m_saver->NamedProfileOverwrite(duplicate_profile_name); }
          }
          else { m_saver->NamedProfileAdd(name); }
@@ -409,8 +409,8 @@ LRESULT DesktopSaverGui::message_menu(WPARAM choice)
          PollRate current = m_saver->GetPollRate();
 
          if (current != DisableHistory
-            && ASK_QUESTION("Disabling your history will erase all history snapshots.  Continue?\n"
-            "(Your named profiles will remain intact)."))
+            && ASK_QUESTION(L"Disabling your history will erase all history snapshots.  Continue?\n"
+            L"(Your named profiles will remain intact)."))
          {
             // We must set the poll rate before clearing the history
             // otherwise a poll will occur *just* after the clear
@@ -463,9 +463,9 @@ LRESULT DesktopSaverGui::message_menu(WPARAM choice)
             int menu_choice = ((UINT)choice - WM_Tray_Profile_Update);
             int profile_choice = int(named_profiles.size() - menu_choice - 1);
 
-            string name = named_profiles[profile_choice].GetName();
+            wstring name = named_profiles[profile_choice].GetName();
 
-            if (ASK_QUESTION("Overwrite '" << name << "' profile with current desktop snapshot?"))
+            if (ASK_QUESTION(L"Overwrite '" << name << L"' profile with current desktop snapshot?"))
             {
                m_saver->NamedProfileOverwrite(name);
             }
@@ -478,9 +478,9 @@ LRESULT DesktopSaverGui::message_menu(WPARAM choice)
             int menu_choice = ((UINT)choice - WM_Tray_Profile_Delete);
             int profile_choice = int(named_profiles.size() - menu_choice - 1);
 
-            string name = named_profiles[profile_choice].GetName();
+            wstring name = named_profiles[profile_choice].GetName();
 
-            if (ASK_QUESTION("Are you sure you want to delete the '" << name << "' profile?"))
+            if (ASK_QUESTION(L"Are you sure you want to delete the '" << name << L"' profile?"))
             {
                m_saver->NamedProfileDelete(name);
             }
@@ -488,7 +488,7 @@ LRESULT DesktopSaverGui::message_menu(WPARAM choice)
             handled = true;
          }
 
-         if (!handled) STANDARD_ERROR("Unexpected 'choice' in popup menu");
+         if (!handled) STANDARD_ERROR(L"Unexpected 'choice' in popup menu");
       }
 
    } // switch
@@ -505,7 +505,7 @@ void DesktopSaverGui::update_timer()
 
    if (!SetTimer(m_hwnd, m_timer_id, timer_delay, (TIMERPROC)0))
    {
-      INTERNAL_ERROR("Couldn't set polling timer!");
+      INTERNAL_ERROR(L"Couldn't set polling timer!");
       exit(1);
    }
 }

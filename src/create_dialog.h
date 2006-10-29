@@ -10,6 +10,6 @@
 
 const static INT_PTR ProfileNameDialogCancelled = 1;
 
-std::string AskForNewProfileName(HINSTANCE hinst, HWND hwnd);
+std::wstring AskForNewProfileName(HINSTANCE hinst, HWND hwnd);
 
 #endif

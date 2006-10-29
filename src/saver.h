@@ -10,14 +10,14 @@
 #include "icon_history.h"
 
 // A handy ostringstream macro
-#ifndef STRING
+#ifndef WSTRING
 #include <sstream>
-#define STRING(v) ((static_cast<std::ostringstream&>(std::ostringstream().flush() << v)).str())
+#define WSTRING(v) ((static_cast<std::wostringstream&>(std::wostringstream().flush() << v)).str())
 #endif
 
-#define INTERNAL_ERROR(err) MessageBox(0, STRING("DesktopSaver Error in file '" << __FILE__ << "', line " << __LINE__ << ":\n" << err).c_str(), "DesktopSaver Error!", MB_ICONERROR)
-#define STANDARD_ERROR(err) MessageBox(0, STRING(err).c_str(), "DesktopSaver Error!", MB_ICONERROR | MB_APPLMODAL)
-#define ASK_QUESTION(str)  (MessageBox(0, STRING(str).c_str(), "DesktopSaver", MB_YESNO | MB_ICONQUESTION | MB_APPLMODAL) == IDYES)
+#define INTERNAL_ERROR(err) MessageBox(0, WSTRING(L"DesktopSaver Error in file '" << __FILE__ << L"', line " << __LINE__ << L":\n" << err).c_str(), L"DesktopSaver Error!", MB_ICONERROR)
+#define STANDARD_ERROR(err) MessageBox(0, WSTRING(err).c_str(), L"DesktopSaver Error!", MB_ICONERROR | MB_APPLMODAL)
+#define ASK_QUESTION(str)  (MessageBox(0, WSTRING(str).c_str(), L"DesktopSaver", MB_YESNO | MB_ICONQUESTION | MB_APPLMODAL) == IDYES)
 
 typedef std::vector<IconHistory> HistoryList;
 typedef HistoryList::iterator MalleableHistoryIter;
@@ -36,7 +36,7 @@ const static PollRate DefaultPollRate = Interval2;
 class DesktopSaver
 {
 public:
-   DesktopSaver(std::string app_name);
+   DesktopSaver(std::wstring app_name);
 
    static const size_t MaxProfileCount = 10;
    static const size_t MaxIconHistoryCount = 25;
@@ -44,9 +44,9 @@ public:
    void PollDesktopIcons();
    void RestoreHistory(IconHistory history);
 
-   void NamedProfileAdd(const std::string &name);
-   void NamedProfileOverwrite(const std::string &name);
-   void NamedProfileDelete(const std::string &name);
+   void NamedProfileAdd(const std::wstring &name);
+   void NamedProfileOverwrite(const std::wstring &name);
+   void NamedProfileDelete(const std::wstring &name);
 
    bool GetRunOnStartup() const;
    void SetRunOnStartup(bool run);
@@ -76,9 +76,9 @@ private:
    // lightweight as possible
    PollRate m_rate;
 
-   std::string m_app_name;
+   std::wstring m_app_name;
 
-   std::string m_history_filename;
+   std::wstring m_history_filename;
    HistoryList m_history_list;
    HistoryList m_named_profile_list;
 };

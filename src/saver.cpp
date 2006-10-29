@@ -11,11 +11,13 @@
 #include "registry.h"
 #include "version.h"
 
+#include "fstream_util.h"
+
 #include <fstream>
 #include <sstream>
 using namespace std;
 
-DesktopSaver::DesktopSaver(string app_name)
+DesktopSaver::DesktopSaver(wstring app_name)
 {
    m_app_name = app_name;
 
@@ -23,7 +25,7 @@ DesktopSaver::DesktopSaver(string app_name)
    m_rate = read_poll_rate();
 
    // Set the location of the history file by starting with a default
-   m_history_filename = "icon_history.txt";
+   m_history_filename = L"icon_history.txt";
 
    // Add the shell folder path if we've got one
    TCHAR sh_path[MAX_PATH];
@@ -35,7 +37,7 @@ DesktopSaver::DesktopSaver(string app_name)
    if (SUCCEEDED(hr))
    {
       // Attempt to create the directory (in case it doesn't already exist
-      string path = STRING(sh_path) + STRING("\\DesktopSaver\\");
+      wstring path = WSTRING(sh_path << L"\\DesktopSaver\\");
       SHCreateDirectoryEx(0, path.c_str(), 0);
 
       m_history_filename = path + m_history_filename;
@@ -70,32 +72,50 @@ void DesktopSaver::deserialize()
 
 void DesktopSaver::serialize() const
 {
-   ofstream file(m_history_filename.c_str());
+   wofstream file;
+
+#pragma warning(push)
+#pragma warning(disable : 4996)
+   IMBUE_NULL_CODECVT(file);
+#pragma warning(pop)
+
+   // NOTE: The multi-byte output requires this
+   const static wstring end = L"\r\n";
+
+   file.open(m_history_filename.c_str(), ios::out | ios::binary);
 
    if (!file.good())
    {
-      STANDARD_ERROR("Could not save icon position information to the file:" << endl
-         << m_history_filename << endl << endl << "Check that you have write access to"
-         << " that location and that the file isn't in use.");
+      STANDARD_ERROR(L"Could not save icon position information to the file:" << endl
+         << m_history_filename << endl << endl << L"Check that you have write access to"
+         << L" that location and that the file isn't in use.");
 
       exit(1);
    }
 
-   file << "#" << endl;
-   file << "# " << m_app_name << " " << DESKTOPSAVER_VERSION << " icon history file" << endl;
-   file << "#" << endl;
-   file << endl;
+   file << L"#" << end;
+   file << L"# " << m_app_name << L" " << DESKTOPSAVER_VERSION << L" icon history file" << end;
+   file << L"#" << end;
+   file << end;
 
    for (HistoryIter i = m_history_list.begin(); i != m_history_list.end(); ++i)
-   { file << i->Serialize() << endl; }
+   { file << i->Serialize() << end; }
 
    for (HistoryIter i = m_named_profile_list.begin(); i != m_named_profile_list.end(); ++i)
-   { file << i->Serialize() << endl; }
+   { file << i->Serialize() << end; }
+
+   if (!file.good())
+   {
+      STANDARD_ERROR(L"Could not save icon position information to the file:" << endl
+         << m_history_filename << endl << endl << L"A problem occurred during write.");
+
+      exit(1);
+   }
 
    file.close();
 }
 
-void DesktopSaver::NamedProfileAdd(const std::string &name)
+void DesktopSaver::NamedProfileAdd(const std::wstring &name)
 {
    IconHistory i = get_desktop(true);
    i.ForceNamedProfileName(name);
@@ -106,7 +126,7 @@ void DesktopSaver::NamedProfileAdd(const std::string &name)
    serialize();
 }
 
-void DesktopSaver::NamedProfileOverwrite(const std::string &name)
+void DesktopSaver::NamedProfileOverwrite(const std::wstring &name)
 {
    // Find the profile in question
    MalleableHistoryIter i;
@@ -114,7 +134,7 @@ void DesktopSaver::NamedProfileOverwrite(const std::string &name)
    {
       if (i->GetName() == name) break;
    }
-   if (i == m_named_profile_list.end()) INTERNAL_ERROR("Couldn't find profile '" << name << "' to overwrite.");
+   if (i == m_named_profile_list.end()) INTERNAL_ERROR(L"Couldn't find profile '" << name << L"' to overwrite.");
 
    *i = get_desktop(true);
    i->ForceNamedProfileName(name);
@@ -123,7 +143,7 @@ void DesktopSaver::NamedProfileOverwrite(const std::string &name)
    serialize();
 }
 
-void DesktopSaver::NamedProfileDelete(const std::string &name)
+void DesktopSaver::NamedProfileDelete(const std::wstring &name)
 {
    // Find the profile in question
    MalleableHistoryIter i;
@@ -131,7 +151,7 @@ void DesktopSaver::NamedProfileDelete(const std::string &name)
    {
       if (i->GetName() == name) break;
    }
-   if (i == m_named_profile_list.end()) INTERNAL_ERROR("Couldn't find profile '" << name << "' to delete.");
+   if (i == m_named_profile_list.end()) INTERNAL_ERROR(L"Couldn't find profile '" << name << "' to delete.");
 
    m_named_profile_list.erase(i);
 
@@ -147,9 +167,9 @@ IconHistory DesktopSaver::get_desktop(bool named_profile)
    IconHistory snapshot(named_profile);
 
    // Find the desktop listview window
-   HWND program_manager = FindWindow(NULL, ("Program Manager"));                     if (program_manager == NULL) return snapshot;
-   HWND desktop = FindWindowEx(program_manager, NULL, ("SHELLDLL_DefView"), NULL);   if (desktop == NULL) return snapshot;
-   HWND listview = FindWindowEx(desktop, NULL, ("SysListView32"), NULL);             if (listview == NULL) return snapshot;
+   HWND program_manager = FindWindow(NULL, (L"Program Manager"));                     if (program_manager == NULL) return snapshot;
+   HWND desktop = FindWindowEx(program_manager, NULL, (L"SHELLDLL_DefView"), NULL);   if (desktop == NULL) return snapshot;
+   HWND listview = FindWindowEx(desktop, NULL, (L"SysListView32"), NULL);             if (listview == NULL) return snapshot;
 
    // Find out how many icons we have
    unsigned long icon_count = static_cast<unsigned long>(SendMessage(listview, LVM_GETITEMCOUNT, 0, 0));
@@ -197,7 +217,7 @@ IconHistory DesktopSaver::get_desktop(bool named_profile)
 
       // We can skip the step of reading back the 'item', because the 
       // only thing we care about is the newly-changed 'text' buffer.
-      char local_text[MAX_PATH+1];
+      wchar_t local_text[MAX_PATH+1];
       ReadProcessMemory(explorer, remote_text, &local_text, sizeof(local_text), NULL);
 
       icon.name = local_text;
@@ -257,9 +277,9 @@ void DesktopSaver::RestoreHistory(IconHistory history)
    // by Jeroen-bart Engelen (who in turn used a lot of advice from others).
 
    // Find the desktop listview window
-   HWND program_manager = FindWindow(NULL, ("Program Manager"));                     if (program_manager == NULL) return;
-   HWND desktop = FindWindowEx(program_manager, NULL, ("SHELLDLL_DefView"), NULL);   if (desktop == NULL) return;
-   HWND listview = FindWindowEx(desktop, NULL, ("SysListView32"), NULL);             if (listview == NULL) return;
+   HWND program_manager = FindWindow(NULL, (L"Program Manager"));                     if (program_manager == NULL) return;
+   HWND desktop = FindWindowEx(program_manager, NULL, (L"SHELLDLL_DefView"), NULL);   if (desktop == NULL) return;
+   HWND listview = FindWindowEx(desktop, NULL, (L"SysListView32"), NULL);             if (listview == NULL) return;
 
    // Find out how many icons we have
    unsigned long icon_count = static_cast<unsigned long>(SendMessage(listview, LVM_GETITEMCOUNT, 0, 0));
@@ -293,9 +313,9 @@ void DesktopSaver::RestoreHistory(IconHistory history)
 
       // We can skip the step of reading back the 'item', because the 
       // only thing we care about is the newly-changed 'text' buffer.
-      char icon_name_buf[MAX_PATH+1];
+      wchar_t icon_name_buf[MAX_PATH+1];
       ReadProcessMemory(explorer, remote_text, &icon_name_buf, sizeof(icon_name_buf), NULL);
-      const string icon_name(icon_name_buf);
+      const wstring icon_name(icon_name_buf);
 
       // Run through the saved list of icons
       const IconList icons = history.GetIcons();
@@ -330,11 +350,11 @@ void DesktopSaver::ClearHistory()
 
 bool DesktopSaver::GetRunOnStartup() const
 {
-   Registry r(Registry::CU_Run, "", "");
+   Registry r(Registry::CU_Run, L"", L"");
 
-   string result;
+   wstring result;
 
-   const string no_result = "__no_result_found";
+   const wstring no_result = L"__no_result_found";
    r.Read(m_app_name, &result, no_result);
 
    return (result != no_result);
@@ -342,7 +362,7 @@ bool DesktopSaver::GetRunOnStartup() const
 
 void DesktopSaver::SetRunOnStartup(bool run)
 {
-   Registry r(Registry::CU_Run, "", "");
+   Registry r(Registry::CU_Run, L"", L"");
 
    if (!run)
    {
@@ -354,7 +374,7 @@ void DesktopSaver::SetRunOnStartup(bool run)
       // Strip whitespace off the ends of the command-line string
       // HKCU/.../Run won't run a command that has a trailing space
       // after it.
-      string command(GetCommandLine());
+      wstring command(GetCommandLine());
       while (command.length() > 0 && isspace(command[0]))                  command = command.substr(1, command.length()-1);
       while (command.length() > 0 && isspace(command[command.length()-1])) command = command.substr(0, command.length()-1);
 
@@ -364,11 +384,11 @@ void DesktopSaver::SetRunOnStartup(bool run)
 
 PollRate DesktopSaver::read_poll_rate() const
 {
-   Registry r(Registry::CurrentUser, m_app_name, "");
+   Registry r(Registry::CurrentUser, m_app_name, L"");
 
    int poll_rate;
 
-   r.Read("poll_rate", &poll_rate, (int)DefaultPollRate);
+   r.Read(L"poll_rate", &poll_rate, (int)DefaultPollRate);
 
    // Force to our enumeration values ONLY
    switch (poll_rate)
@@ -395,8 +415,8 @@ void DesktopSaver::SetPollRate(PollRate r)
 
 void DesktopSaver::write_poll_rate()
 {
-   Registry r(Registry::CurrentUser, m_app_name, "");
-   r.Write("poll_rate", (int)m_rate);
+   Registry r(Registry::CurrentUser, m_app_name, L"");
+   r.Write(L"poll_rate", (int)m_rate);
 }
 
 unsigned int DesktopSaver::GetPollRateMilliseconds() const

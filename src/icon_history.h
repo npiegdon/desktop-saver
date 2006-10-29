@@ -27,7 +27,7 @@ class FileReader;
 // the like-named icons will be ignored.
 struct Icon
 {
-   std::string name;
+   std::wstring name;
    long x;
    long y;
 
@@ -44,9 +44,9 @@ public:
    // and finish with a calculate_name() call.
    IconHistory(bool named_profile);
 
-   std::string GetName() const { return m_name; }
+   std::wstring GetName() const { return m_name; }
    void CalculateName(const IconHistory &previous_history);
-   void ForceNamedProfileName(const std::string &name) { m_name = name; }
+   void ForceNamedProfileName(const std::wstring &name) { m_name = name; }
 
    bool IsNamedProfile() const { return m_named_profile; }
 
@@ -59,15 +59,15 @@ public:
    // true on success, false if the FileReader couldn't
    // supply enough input (for the "last in the file" case)
    bool Deserialize(FileReader *fr);
-   std::string Serialize() const;
+   std::wstring Serialize() const;
 
 private:
    IconList m_icons;
 
    bool m_named_profile;
-   std::string m_name;
+   std::wstring m_name;
 
-   const static std::string named_identifier;
+   const static std::wstring named_identifier;
 };
 
 #endif

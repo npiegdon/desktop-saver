@@ -2,6 +2,10 @@
 // Copyright (c)2006 Nicholas Piegdon
 // See license.txt for license information
 
+#define STRSAFE_NO_DEPRECATE
+#include <windows.h>
+#include "strsafe.h"
+
 #include "tray_icon.h"
 
 int TrayIcon::m_icon_id_counter = 0;
@@ -9,7 +13,7 @@ int TrayIcon::m_icon_id_counter = 0;
 TrayIcon::TrayIcon(HWND hwnd, UINT callback_id, HICON icon)
 : m_hwnd(hwnd), m_callback_id(callback_id), m_icon(icon)
 {
-   m_tooltip = "";
+   m_tooltip = L"";
    m_id = m_icon_id_counter++;
 
    // Now that we've set up the initial state of the object, we can
@@ -33,7 +37,7 @@ void TrayIcon::RestoreIcon()
    if (!ret) __debugbreak();
 }
 
-void TrayIcon::SetTooltip(const std::string &tooltip)
+void TrayIcon::SetTooltip(const std::wstring &tooltip)
 {
    // Just set the tooltip and "modify" the icon
    m_tooltip = tooltip;
@@ -55,7 +59,7 @@ NOTIFYICONDATA TrayIcon::build_icon_data()
    nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
 
    // Copy the tooltip string into the structure
-   strncpy_s(nid.szTip, m_tooltip.c_str(), 64);
+   StringCbCopy(nid.szTip, 64 * sizeof(wchar_t), m_tooltip.c_str());
 
    return nid;
 }

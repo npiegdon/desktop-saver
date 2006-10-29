@@ -3,29 +3,30 @@
 // See license.txt for license information
 
 #include "registry.h"
+#include <cassert>
 
-using std::string;
+using std::wstring;
 
-Registry::Registry(const RootKey rootKey, const string &program, const string &company)
+Registry::Registry(const RootKey rootKey, const wstring program, const wstring company)
 {
-   m_good = true;
-   m_key = NULL;
+   good = true;
+   key = NULL;
 
-   const string run_buf = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
-   string buffer = "Software\\";
+   const wstring run_buf = L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+   wstring buffer = L"Software\\";
 
    if (rootKey != CU_Run && rootKey != LM_Run)
    {
       if (program.length() > 0)
       {
          // Handle passing in only one string to write to the company root
-         if (company.length() > 0) buffer += company + "\\" + program;
+         if (company.length() > 0) buffer += company + L"\\" + program;
          else buffer += program;
       }
-      else m_good = false;
+      else good = false;
    }
 
-   if (m_good)
+   if (good)
    {
       long result = 0;
       DWORD disposition;
@@ -34,88 +35,88 @@ Registry::Registry(const RootKey rootKey, const string &program, const string &c
       switch(rootKey)
       {
       case CurrentUser:
-         result = RegCreateKeyEx(HKEY_CURRENT_USER, buffer.c_str(), 0, "REG_DWORD", REG_OPTION_NON_VOLATILE, KEY_READ | KEY_WRITE, NULL, &m_key, &disposition);
-         if (result != ERROR_SUCCESS) m_good = false;
+         result = RegCreateKeyEx(HKEY_CURRENT_USER, buffer.c_str(), 0, L"REG_DWORD", REG_OPTION_NON_VOLATILE, KEY_READ | KEY_WRITE, NULL, &key, &disposition);
+         if (result != ERROR_SUCCESS) good = false;
          break;
 
       case LocalMachine:
-         result = RegCreateKeyEx(HKEY_LOCAL_MACHINE, buffer.c_str(), 0, "REG_DWORD", REG_OPTION_NON_VOLATILE, KEY_READ | KEY_WRITE, NULL, &m_key, &disposition);
-         if (result != ERROR_SUCCESS) m_good = false;
+         result = RegCreateKeyEx(HKEY_LOCAL_MACHINE, buffer.c_str(), 0, L"REG_DWORD", REG_OPTION_NON_VOLATILE, KEY_READ | KEY_WRITE, NULL, &key, &disposition);
+         if (result != ERROR_SUCCESS) good = false;
          break;
 
       case CU_Run:
-         result = RegCreateKeyEx(HKEY_CURRENT_USER, run_buf.c_str(), 0, "REG_DWORD", REG_OPTION_NON_VOLATILE, KEY_READ | KEY_WRITE, NULL, &m_key, &disposition);
-         if (result != ERROR_SUCCESS) m_good = false;
+         result = RegCreateKeyEx(HKEY_CURRENT_USER, run_buf.c_str(), 0, L"REG_DWORD", REG_OPTION_NON_VOLATILE, KEY_READ | KEY_WRITE, NULL, &key, &disposition);
+         if (result != ERROR_SUCCESS) good = false;
          break;
 
       case LM_Run:
-         result = RegCreateKeyEx(HKEY_LOCAL_MACHINE, run_buf.c_str(), 0, "REG_DWORD", REG_OPTION_NON_VOLATILE, KEY_READ | KEY_WRITE, NULL, &m_key, &disposition);
-         if (result != ERROR_SUCCESS) m_good = false;
+         result = RegCreateKeyEx(HKEY_LOCAL_MACHINE, run_buf.c_str(), 0, L"REG_DWORD", REG_OPTION_NON_VOLATILE, KEY_READ | KEY_WRITE, NULL, &key, &disposition);
+         if (result != ERROR_SUCCESS) good = false;
          break;
       }
    }
 
-   // The user can now check via IsGood() whether the key was opened successfully
+   assert(good);
 }
 
 Registry::~Registry()
 {
-   RegCloseKey(m_key);
+   RegCloseKey(key);
 }
 
-void Registry::Delete(const string &keyName)
+void Registry::Delete(const wstring keyName)
 {
-   if (!m_good) return;
-   RegDeleteValue(m_key, keyName.c_str());
+   if (!good) return;
+   RegDeleteValue(key, keyName.c_str());
 }
 
 
-void Registry::Write(const string &keyName, const string &value)
+void Registry::Write(const wstring keyName, const wstring value)
 {
-   if (!m_good) return;
-   RegSetValueEx(m_key, keyName.c_str(), 0, REG_SZ, (LPBYTE)value.c_str(), (DWORD)(value.length() + 1));
+   if (!good) return;
+   RegSetValueEx(key, keyName.c_str(), 0, REG_SZ, (LPBYTE)value.c_str(), (DWORD)( (value.length()+1)*2 ));
 }
 
-void Registry::Write(const string &keyName, const bool value)
+void Registry::Write(const wstring keyName, const bool value)
 {
-   if (!m_good) return;
+   if (!good) return;
 
    int val = (value)?1:0;
-   RegSetValueEx(m_key, keyName.c_str(), 0, REG_DWORD, (LPBYTE)&val, sizeof(DWORD));
+   RegSetValueEx(key, keyName.c_str(), 0, REG_DWORD, (LPBYTE)&val, sizeof(DWORD));
 }
 
-void Registry::Write(const string &keyName, const long value)
+void Registry::Write(const wstring keyName, const long value)
 {
-   if (!m_good) return;
-   RegSetValueEx(m_key, keyName.c_str(), 0, REG_DWORD, (LPBYTE)&value, sizeof(DWORD));
+   if (!good) return;
+   RegSetValueEx(key, keyName.c_str(), 0, REG_DWORD, (LPBYTE)&value, sizeof(DWORD));
 }
 
-void Registry::Write(const string &keyName, const int value)
+void Registry::Write(const wstring keyName, const int value)
 {
-   if (!m_good) return;
-   RegSetValueEx(m_key, keyName.c_str(), 0, REG_DWORD, (LPBYTE)&value, sizeof(DWORD));
+   if (!good) return;
+   RegSetValueEx(key, keyName.c_str(), 0, REG_DWORD, (LPBYTE)&value, sizeof(DWORD));
 }
 
-const bool Registry::Read(const string &keyName, string *out, const string &defaultValue) const
+const bool Registry::Read(const wstring keyName, wstring *out, const wstring defaultValue) const
 {
    // Default the return value immediately
    *out = defaultValue;
-   if (!m_good) return false;
+   if (!good) return false;
 
    // Read the value once to get the size of the string
    long result = 0;
    DWORD size = 0;
-   result = RegQueryValueEx(m_key, keyName.c_str(), 0, NULL, NULL, &size);
+   result = RegQueryValueEx(key, keyName.c_str(), 0, NULL, NULL, &size);
 
    // Read the value again to get the actual string
    if (result == ERROR_SUCCESS)
    {
-      char *data = new char[size + 1];
+      wchar_t *data = new wchar_t[size + 1];
       if (!data) return false;
 
-      result = RegQueryValueEx(m_key, keyName.c_str(), 0, NULL, (LPBYTE)data, &size);
+      result = RegQueryValueEx(key, keyName.c_str(), 0, NULL, (LPBYTE)data, &size);
 
-      if (result == ERROR_SUCCESS) *out = string(data);
+      if (result == ERROR_SUCCESS) *out = wstring(data);
 
       if (data) delete[] data;
       data = 0;
@@ -126,47 +127,48 @@ const bool Registry::Read(const string &keyName, string *out, const string &defa
    return (result == ERROR_SUCCESS);
 }
 
-const bool Registry::Read(const string &keyName, bool *out, const bool defaultValue) const
+const bool Registry::Read(const wstring keyName, bool *out, const bool defaultValue) const
 {
    // Default the return value immediately
    *out = defaultValue;
-   if (!m_good) return false;
+   if (!good) return false;
 
    DWORD data = 0;
    DWORD dataSize = sizeof(DWORD);
 
-   const long result = RegQueryValueEx(m_key, keyName.c_str(), 0, NULL, (LPBYTE)&data, &dataSize);
+   const long result = RegQueryValueEx(key, keyName.c_str(), 0, NULL, (LPBYTE)&data, &dataSize);
    if (result == ERROR_SUCCESS) *out = !(data == 0);
 
    return (result == ERROR_SUCCESS);
 }
 
-const bool Registry::Read(const string &keyName, long *out, const long defaultValue) const
+const bool Registry::Read(const wstring keyName, long *out, const long defaultValue) const
 {
    // Default the return value immediately
    *out = defaultValue;
-   if (!m_good) return false;
+   if (!good) return false;
 
    DWORD data = 0;
    DWORD dataSize = sizeof(DWORD);
 
-   const long result = RegQueryValueEx(m_key, keyName.c_str(), 0, NULL, (LPBYTE)&data, &dataSize);
+   const long result = RegQueryValueEx(key, keyName.c_str(), 0, NULL, (LPBYTE)&data, &dataSize);
    if (result == ERROR_SUCCESS) *out = data;
 
    return (result == ERROR_SUCCESS);
 }
 
-const bool Registry::Read(const string &keyName, int *out, const int defaultValue) const
+const bool Registry::Read(const wstring keyName, int *out, const int defaultValue) const
 {
    // Default the return value immediately
    *out = defaultValue;
-   if (!m_good) return false;
+   if (!good) return false;
 
    DWORD data = 0;
    DWORD dataSize = sizeof(DWORD);
 
-   const long result = RegQueryValueEx(m_key, keyName.c_str(), 0, NULL, (LPBYTE)&data, &dataSize);
+   const long result = RegQueryValueEx(key, keyName.c_str(), 0, NULL, (LPBYTE)&data, &dataSize);
    if (result == ERROR_SUCCESS) *out = (signed)data;
 
    return (result == ERROR_SUCCESS);
 }
+

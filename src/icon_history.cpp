@@ -12,15 +12,13 @@
 #include <sstream>
 using namespace std;
 
-#define STRING(v) ((static_cast<std::ostringstream&>(std::ostringstream().flush() << v)).str())
-
-const string IconHistory::named_identifier("named_profile");
+const wstring IconHistory::named_identifier(L"named_profile");
 
 
 IconHistory::IconHistory(bool named_profile)
 {
    m_named_profile = named_profile;
-   m_name = "Initial History";
+   m_name = L"Initial History";
 }
 
 bool IconHistory::Deserialize(FileReader *fr)
@@ -30,7 +28,7 @@ bool IconHistory::Deserialize(FileReader *fr)
    m_named_profile = false;
 
    // Read the header
-   string new_name = fr->ReadLine();
+   wstring new_name = fr->ReadLine();
    if (new_name.length() <= 0) return false;
 
    // If this is a named profile, the first
@@ -47,7 +45,7 @@ bool IconHistory::Deserialize(FileReader *fr)
 
    // Parse the icon count using istringstreams
    int icon_count = 0;
-   istringstream icon_count_stream(fr->ReadLine());
+   wistringstream icon_count_stream(fr->ReadLine());
    icon_count_stream >> icon_count;
 
    // Don't check for (icon_count > 0), because
@@ -59,8 +57,8 @@ bool IconHistory::Deserialize(FileReader *fr)
       Icon icon;
 
       icon.name = fr->ReadLine();
-      istringstream x_stream(fr->ReadLine());
-      istringstream y_stream(fr->ReadLine());
+      wistringstream x_stream(fr->ReadLine());
+      wistringstream y_stream(fr->ReadLine());
 
       x_stream >> icon.x;
       y_stream >> icon.y;
@@ -71,9 +69,9 @@ bool IconHistory::Deserialize(FileReader *fr)
       }
       else
       {
-         STANDARD_ERROR("There was a problem reading from the history file.  This"
-            " should fix itself automatically, but some profiles may have"
-            " been lost.");
+         STANDARD_ERROR(L"There was a problem reading from the history file.  This"
+            L" should fix itself automatically, but some profiles may have"
+            L" been lost.");
 
          return false;
       }
@@ -95,9 +93,9 @@ void IconHistory::CalculateName(const IconHistory &previous_history)
    int iconsDel = 0;
    int iconsMov = 0;
 
-   string addName;
-   string delName;
-   string movName;
+   wstring addName;
+   wstring delName;
+   wstring movName;
 
    // Check first in one direction for moved and added icons
    for (IconIter i = m_icons.begin(); i != m_icons.end(); ++i)
@@ -154,27 +152,27 @@ void IconHistory::CalculateName(const IconHistory &previous_history)
    }
 
    // Trim down super-long filenames for display purposes
-   const static string::size_type MaxNameLength = 30;
-   const static string ellipsis = "...";
+   const static wstring::size_type MaxNameLength = 30;
+   const static wstring ellipsis = L"...";
    if (addName.length() > MaxNameLength) addName = addName.substr(0, MaxNameLength) + ellipsis;
    if (delName.length() > MaxNameLength) delName = delName.substr(0, MaxNameLength) + ellipsis;
    if (movName.length() > MaxNameLength) movName = movName.substr(0, MaxNameLength) + ellipsis;
 
    // Default to more generic messages, but let
    // specific one-icon messages pre-empt
-   string extra = "";
-   string extra_with_parens = "";
-   if (iconsAdd > 0) extra = STRING(iconsAdd << " Added");
-   if (iconsDel > 0) extra = STRING(iconsDel << " Deleted");
-   if (iconsAdd > 0 && iconsDel > 0) extra = STRING(iconsAdd << " Added, " << iconsDel << " Deleted");
-   if (extra.length() > 0) extra_with_parens = " (" + extra + ")";
+   wstring extra = L"";
+   wstring extra_with_parens = L"";
+   if (iconsAdd > 0) extra = WSTRING(iconsAdd << L" Added");
+   if (iconsDel > 0) extra = WSTRING(iconsDel << L" Deleted");
+   if (iconsAdd > 0 && iconsDel > 0) extra = WSTRING(iconsAdd << L" Added, " << iconsDel << L" Deleted");
+   if (extra.length() > 0) extra_with_parens = L" (" + extra + L")";
 
-   if (iconsMov > 0) m_name = STRING(iconsMov << " Moved" << extra_with_parens);
-   if (iconsMov == 1) m_name = STRING("'" << movName << "' Moved" << extra_with_parens);
+   if (iconsMov > 0) m_name = WSTRING(iconsMov << L" Moved" << extra_with_parens);
+   if (iconsMov == 1) m_name = WSTRING("'" << movName << L"' Moved" << extra_with_parens);
 
    if (iconsMov == 0) m_name = extra;
-   if (iconsMov == 0 && iconsAdd == 1 && iconsDel == 0) m_name = STRING("'" << addName << "' Added");
-   if (iconsMov == 0 && iconsAdd == 0 && iconsDel == 1) m_name = STRING("'" << delName << "' Deleted");
+   if (iconsMov == 0 && iconsAdd == 1 && iconsDel == 0) m_name = WSTRING(L"'" << addName << L"' Added");
+   if (iconsMov == 0 && iconsAdd == 0 && iconsDel == 1) m_name = WSTRING(L"'" << delName << L"' Deleted");
 }
 
 bool IconHistory::Identical(const IconHistory &other) const
@@ -214,33 +212,34 @@ bool IconHistory::Identical(const IconHistory &other) const
    return true;
 }
 
-string IconHistory::Serialize() const
+wstring IconHistory::Serialize() const
 {
-   ostringstream os;
+   wostringstream os;
+
+   // NOTE: The multi-byte output requires this
+   const static wstring end = L"\r\n";
 
    // Write the header
-   os << "# =============================================" << endl;
-   os << "# IconHistory \"" << m_name << "\"" << endl << endl;
+   os << L"# =============================================" << end;
+   os << L"# IconHistory \"" << m_name << L"\"" << end << end;
 
-   if (IsNamedProfile()) { os << named_identifier << endl; }
+   if (IsNamedProfile()) { os << named_identifier << end; }
 
-   os << m_name << endl;
-   os << (unsigned int)m_icons.size() << endl;
-   os << endl;
+   os << m_name << end;
+   os << (unsigned int)m_icons.size() << end;
+   os << end;
 
    // Write each icon
    int counter = 0;
    for (IconIter i = m_icons.begin(); i != m_icons.end(); ++i)
    {
-      //os << "# Icon " << ++counter << " of " << (unsigned int)(m_icons.size() + 1) << endl;
-
-      os << i->name << endl;
-      os << i->x << endl;
-      os << i->y << endl;
-      os << endl;
+      os << i->name << end;
+      os << i->x << end;
+      os << i->y << end;
+      os << end;
    }
 
-   os << endl;
+   os << end;
 
    return os.str();
 }

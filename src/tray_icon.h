@@ -20,7 +20,7 @@ public:
    // Creation Notification".
    void RestoreIcon();
 
-   void SetTooltip(const std::string &tooltip);
+   void SetTooltip(const std::wstring &tooltip);
 
 private:
 
@@ -30,7 +30,7 @@ private:
    HWND m_hwnd;
    UINT m_callback_id;
    HICON m_icon;
-   std::string m_tooltip;
+   std::wstring m_tooltip;
 
    static int m_icon_id_counter;
 };

@@ -13,21 +13,21 @@
 class FileReader
 {
 public:
-   FileReader(const std::string &filename);
+   FileReader(const std::wstring &filename);
    ~FileReader();
 
    // Will skip whitespace and comment lines
    // On eof, will continuously return empty strings
-   const std::string ReadLine();
+   const std::wstring ReadLine();
 
 private:
    // Explicitly deny copying and assignment
    FileReader(const FileReader&);
    FileReader& operator=(FileReader&);
 
-   const static char comment_char = '#';
+   const static wchar_t comment_char = L'#';
 
-   std::ifstream file;
+   std::wifstream file;
 };
 
 #endif

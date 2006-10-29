@@ -3,14 +3,24 @@
 // See license.txt for license information
 
 #include "file_reader.h"
+
+#include "fstream_util.h"
 #include <fstream>
+
+#include <set>
 
 using namespace std;
 
-FileReader::FileReader(const string &filename)
+FileReader::FileReader(const wstring &filename)
 {
+
+#pragma warning(push)
+#pragma warning(disable : 4996)
+   IMBUE_NULL_CODECVT(file);
+#pragma warning(pop)
+
    // Try opening the specified file
-   file.open(filename.c_str());
+   file.open(filename.c_str(), ios::in | ios::binary);
 
    if (!file.good()) file.close();
 }
@@ -20,14 +30,14 @@ FileReader::~FileReader()
    file.close();
 }
 
-const string FileReader::ReadLine()
+const wstring FileReader::ReadLine()
 {
    bool keepGoing;
-   string line;
+   wstring line;
 
    do
    {
-      if (!file.good()) return "";
+      if (!file.good()) return L"";
 
       getline(file, line);
 
@@ -54,9 +64,16 @@ const string FileReader::ReadLine()
       {
          bool foundNonWhitespace = false;
 
+         std::set<wchar_t> whitespace;
+         whitespace.insert(L' ');
+         whitespace.insert(L'\n');
+         whitespace.insert(L'\r');
+         whitespace.insert(L'\t');
+         
          for (int i = 0; i < (int)line.length(); ++i)
          {
-            if (!isspace(line[i])) foundNonWhitespace = true;
+            wchar_t character = line[i];
+            if (whitespace.find(character) == whitespace.end()) foundNonWhitespace = true;
          }
 
          // If after searching the whole line, we didn't find any
@@ -65,6 +82,11 @@ const string FileReader::ReadLine()
       }
 
    } while (keepGoing);
+
+   while (line.length() > 1 && line[line.length() - 1] == 13)
+   {
+      line = line.substr(0, line.length() - 1);
+   }
 
    return line;
 }

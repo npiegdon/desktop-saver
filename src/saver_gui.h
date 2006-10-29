@@ -39,8 +39,8 @@ private:
 
    HWND m_hwnd;
    HINSTANCE m_hinstance;
-   std::string m_app_name;
-   std::string m_class_name;
+   std::wstring m_app_name;
+   std::wstring m_class_name;
 
    UINT m_taskbar_restart_message;
    UINT_PTR m_timer_id;

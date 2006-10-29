@@ -5,7 +5,7 @@
 #include "create_dialog.h"
 #include "resource.h"
 
-// For STRING and INTERNAL_ERROR
+// For INTERNAL_ERROR
 #include "saver.h"
 
 using namespace std;
@@ -56,20 +56,20 @@ BOOL CALLBACK CreateDialogProc(HWND dialog_hwnd, UINT message, WPARAM wparam, LP
    return FALSE;
 }
 
-string AskForNewProfileName(HINSTANCE hinst, HWND hwnd)
+wstring AskForNewProfileName(HINSTANCE hinst, HWND hwnd)
 {
    INT_PTR ret = DialogBox(hinst, MAKEINTRESOURCE(IDD_NEW_PROFILE), hwnd, CreateDialogProc);
 
    if (ret <= 0)
    {
-      INTERNAL_ERROR("Problem creating 'New Profile Name' dialog box.");
+      INTERNAL_ERROR(L"Problem creating 'New Profile Name' dialog box.");
       exit(1);
    }
 
-   if (ret == ProfileNameDialogCancelled) { return ""; }
+   if (ret == ProfileNameDialogCancelled) { return L""; }
 
    // Anything else returned ought to be a pointer to the new name
-   string name = STRING((char*)ret);
+   wstring name = WSTRING((char*)ret);
    delete[] (char*)ret;
 
    return name;
