@@ -134,7 +134,7 @@ const bool Registry::Read(const string &keyName, bool *out, const bool defaultVa
 
    DWORD data = 0;
    DWORD dataSize = sizeof(DWORD);
-   
+
    const long result = RegQueryValueEx(m_key, keyName.c_str(), 0, NULL, (LPBYTE)&data, &dataSize);
    if (result == ERROR_SUCCESS) *out = !(data == 0);
 

@@ -54,7 +54,7 @@ DesktopSaver::DesktopSaver(string app_name)
 void DesktopSaver::deserialize()
 {
    FileReader fr(m_history_filename);
-   
+
    // knock out our old history and named profile list
    m_history_list = HistoryList();
    m_named_profile_list = HistoryList();
@@ -318,7 +318,7 @@ void DesktopSaver::RestoreHistory(IconHistory history)
 void DesktopSaver::ClearHistory()
 {
    m_history_list.clear();
-   
+
    // As an added security measure, we should write
    // the history file out immediately to erase any
    // remaining "evidence"
@@ -367,7 +367,7 @@ PollRate DesktopSaver::read_poll_rate() const
    Registry r(Registry::CurrentUser, m_app_name, "");
 
    int poll_rate;
-   
+
    r.Read("poll_rate", &poll_rate, (int)DefaultPollRate);
 
    // Force to our enumeration values ONLY

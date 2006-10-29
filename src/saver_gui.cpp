@@ -136,10 +136,10 @@ LRESULT CALLBACK DesktopSaverGui::proc(HWND hwnd, UINT message, WPARAM wparam, L
    case WM_COMMAND:     { return gui->message_menu(wparam); }
    case WM_TIMER:       { return gui->message_timer(wparam); return 0; }
    default:             {
-                           LRESULT ret = gui->message_default(message, wparam, lparam);
+      LRESULT ret = gui->message_default(message, wparam, lparam);
 
-                           if (ret == RET_DEF_PROC) break;
-                           else return ret;
+      if (ret == RET_DEF_PROC) break;
+      else return ret;
                         }
    }
    return DefWindowProc(hwnd, message, wparam, lparam);
@@ -279,7 +279,7 @@ HMENU DesktopSaverGui::build_dynamic_menu()
    HMENU menu = CreatePopupMenu();
 
    const HistoryList &history = m_saver->History();
-   
+
    // This shouldn't happen (but is non-critical)
    if (history.size() > DesktopSaver::MaxIconHistoryCount) INTERNAL_ERROR("History List too long!");
 
@@ -338,90 +338,90 @@ LRESULT DesktopSaverGui::message_menu(WPARAM choice)
    switch (choice)
    {
    case WM_Tray_History_Clear:
-   {
-      if (ASK_QUESTION("Are you sure you want to erase your icon position history?\n"
-                        "(Your named profiles will remain intact)."))
       {
-         m_saver->ClearHistory();
-      }
+         if (ASK_QUESTION("Are you sure you want to erase your icon position history?\n"
+            "(Your named profiles will remain intact)."))
+         {
+            m_saver->ClearHistory();
+         }
 
-      break;
-   }
+         break;
+      }
 
    case WM_Tray_Exit:
-   { 
-      SendMessage(m_hwnd, WM_DESTROY, 0, 0);
-      break;
-   }
+      { 
+         SendMessage(m_hwnd, WM_DESTROY, 0, 0);
+         break;
+      }
 
    case WM_Tray_Profile_Create:
-   {
-      // This option is only available if there aren't
-      // too many named profiles already.
-
-      string name = AskForNewProfileName(m_hinstance, m_hwnd);
-      
-      // If the user presses cancel in the dialog (or just
-      // leaves the box blank), it comes back empty.
-      if (name == "") break;
-
-      // Check that this (case insensitive) name doesn't already exist.
-      bool duplicate = false;
-      string duplicate_profile_name;
-
-      const HistoryList history = m_saver->NamedProfiles();
-      for (size_t i = 0; i < history.size(); ++i)
       {
-         string name_lower = name;
-         std::transform(name.begin(), name.end(), name_lower.begin(), tolower);
+         // This option is only available if there aren't
+         // too many named profiles already.
 
-         string other = history[i].GetName();
+         string name = AskForNewProfileName(m_hinstance, m_hwnd);
 
-         string other_lower = other;
-         std::transform(other.begin(), other.end(), other_lower.begin(), tolower);
+         // If the user presses cancel in the dialog (or just
+         // leaves the box blank), it comes back empty.
+         if (name == "") break;
 
-         if (name_lower == other_lower)
+         // Check that this (case insensitive) name doesn't already exist.
+         bool duplicate = false;
+         string duplicate_profile_name;
+
+         const HistoryList history = m_saver->NamedProfiles();
+         for (size_t i = 0; i < history.size(); ++i)
          {
-            duplicate = true;
-            duplicate_profile_name = other;
-            break;
+            string name_lower = name;
+            std::transform(name.begin(), name.end(), name_lower.begin(), tolower);
+
+            string other = history[i].GetName();
+
+            string other_lower = other;
+            std::transform(other.begin(), other.end(), other_lower.begin(), tolower);
+
+            if (name_lower == other_lower)
+            {
+               duplicate = true;
+               duplicate_profile_name = other;
+               break;
+            }
          }
-      }
 
-      if (duplicate)
-      {
-         if (ASK_QUESTION("A profile with the name '" << duplicate_profile_name << "' already exists.  Overwrite?"))
-         { m_saver->NamedProfileOverwrite(duplicate_profile_name); }
-      }
-      else { m_saver->NamedProfileAdd(name); }
+         if (duplicate)
+         {
+            if (ASK_QUESTION("A profile with the name '" << duplicate_profile_name << "' already exists.  Overwrite?"))
+            { m_saver->NamedProfileOverwrite(duplicate_profile_name); }
+         }
+         else { m_saver->NamedProfileAdd(name); }
 
-      break;
-   }
+         break;
+      }
 
    case WM_Tray_On_Startup:
-   {
-      m_saver->SetRunOnStartup(!m_saver->GetRunOnStartup());
-      break;
-   }
+      {
+         m_saver->SetRunOnStartup(!m_saver->GetRunOnStartup());
+         break;
+      }
 
    case WM_Tray_Disable_History:
-   {
-      PollRate current = m_saver->GetPollRate();
-
-      if (current != DisableHistory
-       && ASK_QUESTION("Disabling your history will erase all history snapshots.  Continue?\n"
-                        "(Your named profiles will remain intact)."))
       {
-         // We must set the poll rate before clearing the history
-         // otherwise a poll will occur *just* after the clear
-         // and it won't be stopped by the disable bit.
-         m_saver->SetPollRate(DisableHistory);
-         update_timer();
+         PollRate current = m_saver->GetPollRate();
 
-         m_saver->ClearHistory();
+         if (current != DisableHistory
+            && ASK_QUESTION("Disabling your history will erase all history snapshots.  Continue?\n"
+            "(Your named profiles will remain intact)."))
+         {
+            // We must set the poll rate before clearing the history
+            // otherwise a poll will occur *just* after the clear
+            // and it won't be stopped by the disable bit.
+            m_saver->SetPollRate(DisableHistory);
+            update_timer();
+
+            m_saver->ClearHistory();
+         }
+         break;
       }
-      break;
-   }
 
    case WM_Tray_Poll_Endpoints: m_saver->SetPollRate(PollEndpoints); update_timer(); break;
    case WM_Tray_Poll_Interval1: m_saver->SetPollRate(Interval1);     update_timer(); break;
@@ -430,66 +430,66 @@ LRESULT DesktopSaverGui::message_menu(WPARAM choice)
    case WM_Tray_Poll_Interval4: m_saver->SetPollRate(Interval4);     update_timer(); break;
 
    default:
-   {
-      if (choice < WM_Lookup_Begin) break;
-      if (choice >= WM_Tray_Profile_Delete + DesktopSaver::MaxProfileCount) break;
-
-      bool handled = false;
-
-      const HistoryList &history = m_saver->History();
-      const HistoryList &named_profiles = m_saver->NamedProfiles();
-
-      // History selection
-      if (choice >= WM_Tray_History + 0 && choice < WM_Tray_History + DesktopSaver::MaxIconHistoryCount)
       {
-         int menu_choice = ((UINT)choice - WM_Tray_History);
-         int history_choice = int(history.size() - menu_choice - 1);
+         if (choice < WM_Lookup_Begin) break;
+         if (choice >= WM_Tray_Profile_Delete + DesktopSaver::MaxProfileCount) break;
 
-         m_saver->RestoreHistory(history[history_choice]);
-         handled = true;
-      }
+         bool handled = false;
 
-      if (choice >= WM_Tray_Named_Profile + 0 && choice < WM_Tray_Named_Profile + DesktopSaver::MaxProfileCount)
-      {
-         int menu_choice = ((UINT)choice - WM_Tray_Named_Profile);
-         int profile_choice = int(named_profiles.size() - menu_choice - 1);
+         const HistoryList &history = m_saver->History();
+         const HistoryList &named_profiles = m_saver->NamedProfiles();
 
-         m_saver->RestoreHistory(named_profiles[profile_choice]);
-         handled = true;
-      }
-
-      if (choice >= WM_Tray_Profile_Update + 0 && choice < WM_Tray_Profile_Update + DesktopSaver::MaxProfileCount)
-      {
-         int menu_choice = ((UINT)choice - WM_Tray_Profile_Update);
-         int profile_choice = int(named_profiles.size() - menu_choice - 1);
-
-         string name = named_profiles[profile_choice].GetName();
-
-         if (ASK_QUESTION("Overwrite '" << name << "' profile with current desktop snapshot?"))
+         // History selection
+         if (choice >= WM_Tray_History + 0 && choice < WM_Tray_History + DesktopSaver::MaxIconHistoryCount)
          {
-            m_saver->NamedProfileOverwrite(name);
+            int menu_choice = ((UINT)choice - WM_Tray_History);
+            int history_choice = int(history.size() - menu_choice - 1);
+
+            m_saver->RestoreHistory(history[history_choice]);
+            handled = true;
          }
 
-         handled = true;
-      }
-
-      if (choice >= WM_Tray_Profile_Delete + 0 && choice < WM_Tray_Profile_Delete + DesktopSaver::MaxProfileCount)
-      {
-         int menu_choice = ((UINT)choice - WM_Tray_Profile_Delete);
-         int profile_choice = int(named_profiles.size() - menu_choice - 1);
-
-         string name = named_profiles[profile_choice].GetName();
-
-         if (ASK_QUESTION("Are you sure you want to delete the '" << name << "' profile?"))
+         if (choice >= WM_Tray_Named_Profile + 0 && choice < WM_Tray_Named_Profile + DesktopSaver::MaxProfileCount)
          {
-            m_saver->NamedProfileDelete(name);
+            int menu_choice = ((UINT)choice - WM_Tray_Named_Profile);
+            int profile_choice = int(named_profiles.size() - menu_choice - 1);
+
+            m_saver->RestoreHistory(named_profiles[profile_choice]);
+            handled = true;
          }
 
-         handled = true;
-      }
+         if (choice >= WM_Tray_Profile_Update + 0 && choice < WM_Tray_Profile_Update + DesktopSaver::MaxProfileCount)
+         {
+            int menu_choice = ((UINT)choice - WM_Tray_Profile_Update);
+            int profile_choice = int(named_profiles.size() - menu_choice - 1);
 
-      if (!handled) STANDARD_ERROR("Unexpected 'choice' in popup menu");
-   }
+            string name = named_profiles[profile_choice].GetName();
+
+            if (ASK_QUESTION("Overwrite '" << name << "' profile with current desktop snapshot?"))
+            {
+               m_saver->NamedProfileOverwrite(name);
+            }
+
+            handled = true;
+         }
+
+         if (choice >= WM_Tray_Profile_Delete + 0 && choice < WM_Tray_Profile_Delete + DesktopSaver::MaxProfileCount)
+         {
+            int menu_choice = ((UINT)choice - WM_Tray_Profile_Delete);
+            int profile_choice = int(named_profiles.size() - menu_choice - 1);
+
+            string name = named_profiles[profile_choice].GetName();
+
+            if (ASK_QUESTION("Are you sure you want to delete the '" << name << "' profile?"))
+            {
+               m_saver->NamedProfileDelete(name);
+            }
+
+            handled = true;
+         }
+
+         if (!handled) STANDARD_ERROR("Unexpected 'choice' in popup menu");
+      }
 
    } // switch
 

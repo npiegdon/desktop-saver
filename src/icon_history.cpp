@@ -91,13 +91,13 @@ void IconHistory::AddIcon(Icon icon)
 
 void IconHistory::CalculateName(const IconHistory &previous_history)
 {
-    int iconsAdd = 0;
-    int iconsDel = 0;
-    int iconsMov = 0;
+   int iconsAdd = 0;
+   int iconsDel = 0;
+   int iconsMov = 0;
 
-    string addName;
-    string delName;
-    string movName;
+   string addName;
+   string delName;
+   string movName;
 
    // Check first in one direction for moved and added icons
    for (IconIter i = m_icons.begin(); i != m_icons.end(); ++i)
@@ -152,6 +152,13 @@ void IconHistory::CalculateName(const IconHistory &previous_history)
       }
       // else we found the icon in question, no change
    }
+
+   // Trim down super-long filenames for display purposes
+   const static string::size_type MaxNameLength = 30;
+   const static string ellipsis = "...";
+   if (addName.length() > MaxNameLength) addName = addName.substr(0, MaxNameLength) + ellipsis;
+   if (delName.length() > MaxNameLength) delName = delName.substr(0, MaxNameLength) + ellipsis;
+   if (movName.length() > MaxNameLength) movName = movName.substr(0, MaxNameLength) + ellipsis;
 
    // Default to more generic messages, but let
    // specific one-icon messages pre-empt
@@ -234,7 +241,7 @@ string IconHistory::Serialize() const
    }
 
    os << endl;
-   
+
    return os.str();
 }
 

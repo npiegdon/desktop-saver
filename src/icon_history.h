@@ -52,7 +52,7 @@ public:
 
    void AddIcon(Icon icon);
    bool Identical(const IconHistory &other) const;
-   
+
    const IconList GetIcons() const { return m_icons; }
 
    // Restore icon history from file.  Returns

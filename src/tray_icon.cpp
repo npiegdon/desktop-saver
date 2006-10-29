@@ -7,7 +7,7 @@
 int TrayIcon::m_icon_id_counter = 0;
 
 TrayIcon::TrayIcon(HWND hwnd, UINT callback_id, HICON icon)
-   : m_hwnd(hwnd), m_callback_id(callback_id), m_icon(icon)
+: m_hwnd(hwnd), m_callback_id(callback_id), m_icon(icon)
 {
    m_tooltip = "";
    m_id = m_icon_id_counter++;
