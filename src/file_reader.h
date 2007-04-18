@@ -8,7 +8,7 @@
 #include <string>
 #include <fstream>
 
-// A simple file manipulation class to read the plain-text with pound (':')
+// A simple file manipulation class to read the plain-text with colon (':')
 // comment line format.  (Whitespace allowed, with one data item per line)
 class FileReader
 {

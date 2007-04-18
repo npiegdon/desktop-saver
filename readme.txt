@@ -54,74 +54,72 @@ CHANGE LOG
 
 DesktopSaver 2.0.3:
 
-- Extra-long filenames are now truncated in the history list view.
+CHG: Extra-long filenames are now truncated in the history list view.
 
-- Unicode desktop icon names and profile names are now supported.
-  (Remaining profile history from previous versions will be silently
-  backed up and upgraded.)
+NEW: Unicode desktop icon names and profile names are now supported.
+    (Remaining profile history from previous versions will be silently
+    backed up and upgraded.)
 
 ------------------------------------------------------------------------------
 
 DesktopSaver 2.0.2:
 
-- Converted project files to use Microsoft Visual C++ 2005 Express Edition.
+CHG: Converted project files to use Microsoft Visual C++ 2005 Express Edition.
 
-- Updated the NSIS script to make the installer's attempt at stopping any 
-  running instances of DesktopSaver much more graceful and cross-platform.
+CHG: Updated the NSIS script to make the installer's attempt at stopping any 
+     running instances of DesktopSaver much more graceful and cross-platform.
 
-- Issue 1467204: Fixed.  Replaced the WinXP-only call to
-  SHGetFolderPathAndSubDir with the more compatible SHGetFolderPath.
+FIX: Issue 1467204: Fixed.  Replaced the WinXP-only call to
+     SHGetFolderPathAndSubDir with the more compatible SHGetFolderPath.
 
 ------------------------------------------------------------------------------
 
 DesktopSaver 2.0.1:
 
-- Made a few small changes to how the version number was handled in
-  the source and in the install script.  Version numbers (while still
-  set by hand) should be more consistent with the versioning scheme
-  being used on the SourceForge page.
+CHG: Made a few small changes to how the version number was handled in
+     the source and in the install script.  Version numbers (while still
+     set by hand) should be more consistent with the versioning scheme
+     being used on the SourceForge page.
 
-- Made uninstaller attempt to stop any running instances of DesktopSaver
-  in hopes of a cleaner uninstall.  (This only works in Windows XP).
+NEW: Made uninstaller attempt to stop any running instances of DesktopSaver
+     in hopes of a cleaner uninstall.  (This only works in Windows XP).
 
-- Made installer attempt to stop any running instances of DesktopSaver
-  in hopes of successfully installing over an old version.  (This only
-  works in Windows XP).
+NEW: Made installer attempt to stop any running instances of DesktopSaver
+     in hopes of successfully installing over an old version.  (This only
+     works in Windows XP).
 
-- Added a section to the Installer to "Run after Install".
+NEW: Added a section to the Installer to "Run after Install".
 
 ------------------------------------------------------------------------------
 
 DesktopSaver 2.0.0:
 
-- Rebranded the application "DesktopSaver".
+CHG: Rebranded the application "DesktopSaver".
 
-- Added "Named Snapshots" feature.
+NEW: Added "Named Snapshots" feature.
 
-- Added "Poll Speed" and "History Count" options.
+NEW: Added "Poll Speed" and "History Count" options.
 
-- Added a Nullsoft Install System script.
+NEW: Added a Nullsoft Install System script.
 
-- Created a .chm help file.
+NEW: Created a new (albeit, amateur) application icon in order to free all
+     assets from proprietary licenses.
 
-- Created a new (albeit, amateur) application icon in order to free all
-  assets from proprietary licenses.
+CHG: Gave the source a once-over to prepare it as an open source project.
 
-- Gave the source a once-over to prepare it as an open source project.
-
-- Made history file write to limited-account writeable location.
+CHG: Made history file write to limited-account writeable location.
 
 ------------------------------------------------------------------------------
 
 IconSaver 1.1:
 
-- Fixed an issue where a new ("initial") history slice wasn't being generated
-  after clearing the history.
+FIX: Fixed an issue where a new ("initial") history slice wasn't being
+     generated after clearing the history.
 
 ------------------------------------------------------------------------------
 
 IconSaver 1.0:
 
-- Initial release.
+NEW: Initial release.
 
 ------------------------------------------------------------------------------
