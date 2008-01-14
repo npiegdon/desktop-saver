@@ -232,7 +232,7 @@ void IconHistory::CalculateName(const IconHistory &previous_history)
    if (extra.length() > 0) extra_with_parens = L" (" + extra + L")";
 
    if (iconsMov > 0) m_name = WSTRING(iconsMov << L" Moved" << extra_with_parens);
-   if (iconsMov == 1) m_name = WSTRING("'" << movName << L"' Moved" << extra_with_parens);
+   if (iconsMov == 1) m_name = WSTRING(L"'" << movName << L"' Moved" << extra_with_parens);
 
    if (iconsMov == 0) m_name = extra;
    if (iconsMov == 0 && iconsAdd == 1 && iconsDel == 0) m_name = WSTRING(L"'" << addName << L"' Added");
