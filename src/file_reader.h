@@ -7,6 +7,7 @@
 
 #include <string>
 #include <fstream>
+#include <sstream>
 
 // A simple file manipulation class to read the plain-text with colon (':')
 // comment line format.  (Whitespace allowed, with one data item per line)
@@ -27,7 +28,7 @@ private:
 
    const static wchar_t comment_char = L':';
 
-   std::wifstream file;
+   std::wistringstream *stream;
 };
 
 // A simple file manipulation class to read the plain-text with pound ('#')
@@ -49,7 +50,7 @@ private:
 
    const static char comment_char = '#';
 
-   std::ifstream file;
+   std::istringstream *stream;
 };
 
 #endif

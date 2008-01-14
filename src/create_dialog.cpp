@@ -10,7 +10,7 @@
 
 using namespace std;
 
-BOOL CALLBACK CreateDialogProc(HWND dialog_hwnd, UINT message, WPARAM wparam, LPARAM lparam)
+INT_PTR CALLBACK CreateDialogProc(HWND dialog_hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
    switch (message)
    {

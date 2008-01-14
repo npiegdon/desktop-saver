@@ -11,35 +11,50 @@
 
 using namespace std;
 
-FileReader::FileReader(const wstring &filename)
+FileReader::FileReader(const wstring &filename) : stream(0)
 {
+   // Try opening the specified file
+   FILE *f = _wfopen(filename.c_str(), L"rb");
+   if (f == 0) return;
+
+   const static int BufferSize = 256;
+   wchar_t buffer[BufferSize];
+   memset(buffer, 0, BufferSize*sizeof(wchar_t));
+
+   wstring whole_file;
+   while (fread(buffer, sizeof(wchar_t), BufferSize - 1, f) > 0)
+   {
+      whole_file += wstring(buffer);
+      memset(buffer, 0, BufferSize*sizeof(wchar_t));
+   }
+   
+   stream = new wistringstream(whole_file.c_str());
 
 #pragma warning(push)
 #pragma warning(disable : 4996)
-   IMBUE_NULL_CODECVT(file);
+   IMBUE_NULL_CODECVT(*stream);
 #pragma warning(pop)
 
-   // Try opening the specified file
-   file.open(filename.c_str(), ios::in | ios::binary);
-
-   if (!file.good()) file.close();
+   fclose(f);
 }
 
 FileReader::~FileReader()
 {
-   file.close();
+   delete stream;
 }
 
 const wstring FileReader::ReadLine()
 {
+   if (!stream) return L"";
+
    bool keepGoing;
    wstring line;
 
    do
    {
-      if (!file.good()) return L"";
+      if (!stream->good()) return L"";
 
-      getline(file, line);
+      getline(*stream, line);
 
       keepGoing = false;
 
@@ -99,28 +114,45 @@ const wstring FileReader::ReadLine()
 
 
 
-FileReaderNonUnicode::FileReaderNonUnicode(const wstring &filename)
+FileReaderNonUnicode::FileReaderNonUnicode(const wstring &filename) : stream(0)
 {
    // Try opening the specified file
-   file.open(filename.c_str());
-   if (!file.good()) file.close();
+   FILE *f = _wfopen(filename.c_str(), L"rb");
+   if (f == 0) return;
+
+   const static int BufferSize = 256;
+   char buffer[BufferSize];
+   memset(buffer, 0, BufferSize*sizeof(char));
+
+   string whole_file;
+   while (fread(buffer, sizeof(char), BufferSize, f) > 0)
+   {
+      whole_file += buffer;
+      memset(buffer, 0, BufferSize*sizeof(char));
+   }
+   
+   stream = new istringstream(whole_file.c_str());
+
+   fclose(f);
 }
 
 FileReaderNonUnicode::~FileReaderNonUnicode()
 {
-   file.close();
+   delete stream;
 }
 
 const string FileReaderNonUnicode::ReadLine()
 {
+   if (!stream) return "";
+
    bool keepGoing;
    string line;
 
    do
    {
-      if (!file.good()) return "";
+      if (!stream->good()) return "";
 
-      getline(file, line);
+      getline(*stream, line);
 
       keepGoing = false;
 

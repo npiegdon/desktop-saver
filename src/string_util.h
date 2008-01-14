@@ -52,7 +52,7 @@ public:
          using namespace std;
          pCType_ = &_USE(loc, ctype<E> );
       #else
-         pCType_ = &std::use_facet<std::ctype<E> >(loc);
+         pCType_ = &std::use_facet<std::ctype<E> >(loc, 0, false);
       #endif
    }
 

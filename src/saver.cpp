@@ -109,26 +109,10 @@ void DesktopSaver::deserialize()
 
 void DesktopSaver::serialize() const
 {
-   wofstream file;
-
-#pragma warning(push)
-#pragma warning(disable : 4996)
-   IMBUE_NULL_CODECVT(file);
-#pragma warning(pop)
-
    // NOTE: The multi-byte output requires this
    const static wstring end = L"\r\n";
 
-   file.open(m_history_filename_UNICODE.c_str(), ios::out | ios::binary);
-
-   if (!file.good())
-   {
-      STANDARD_ERROR(L"Could not save icon position information to the file:" << endl
-         << m_history_filename_UNICODE << endl << endl << L"Check that you have write access to"
-         << L" that location and that the file isn't in use.");
-
-      exit(1);
-   }
+   wostringstream file;
 
    file << L":" << end;
    file << L": " << m_app_name << L" " << DESKTOPSAVER_VERSION << L" icon history file" << end;
@@ -141,15 +125,21 @@ void DesktopSaver::serialize() const
    for (HistoryIter i = m_named_profile_list.begin(); i != m_named_profile_list.end(); ++i)
    { file << i->Serialize() << end; }
 
-   if (!file.good())
+
+   FILE *f;
+   f = _wfopen(m_history_filename_UNICODE.c_str(), L"wb");
+
+   if (f == 0)
    {
       STANDARD_ERROR(L"Could not save icon position information to the file:" << endl
-         << m_history_filename_UNICODE << endl << endl << L"A problem occurred during write.");
+         << m_history_filename_UNICODE << endl << endl << L"Check that you have write access to"
+         << L" that location and that the file isn't in use.");
 
       exit(1);
    }
 
-   file.close();
+   fputws(file.str().c_str(), f);
+   fclose(f);
 }
 
 void DesktopSaver::NamedProfileAdd(const std::wstring &name)
