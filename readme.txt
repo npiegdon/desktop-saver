@@ -52,6 +52,15 @@ Polling takes about 2ms if no changes have been made to the desktop, and only 15
 CHANGE LOG
 ==========
 
+DesktopSaver 2.0.4:
+
+NEW: You can now add a command-line argument to auto-load a profile, say,
+     from a script.  It will only work in XP or later, and there is no
+     output aside from a return code of 0 if the profile was found and
+     loaded or 1 if it wasn't.  Spaces and Unicode are allowed.
+
+------------------------------------------------------------------------------
+
 DesktopSaver 2.0.3:
 
 CHG: Extra-long filenames are now truncated in the history list view.

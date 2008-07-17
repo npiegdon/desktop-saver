@@ -4,7 +4,7 @@
 
 !include "MUI.nsh"
 
-!define VERSION 2.0.3
+!define VERSION 2.0.4
 
 Name "DesktopSaver ${VERSION}"
 OutFile "DesktopSaver-${VERSION}-installer.exe"
@@ -12,6 +12,7 @@ InstallDir $PROGRAMFILES\DesktopSaver
 BrandingText " "
 
 !define MUI_ABORTWARNING
+!define MUI_COMPONENTSPAGE_SMALLDESC
 
 !insertmacro MUI_PAGE_LICENSE "..\license.txt"
 !insertmacro MUI_PAGE_COMPONENTS
@@ -62,25 +63,7 @@ Function un.CloseProgram
   Pop $1
 FunctionEnd
 
-Function .onMouseOverSection
-  FindWindow $R0 "#32770" "" $HWNDPARENT
-  GetDlgItem $R0 $R0 1043 ; description item (must be added to the UI)
-
-  StrCmp $0 0 "" +2
-    SendMessage $R0 ${WM_SETTEXT} 0 "STR:Installs the DesktopSaver application files."
-
-  StrCmp $0 1 "" +2
-    SendMessage $R0 ${WM_SETTEXT} 0 "STR:Adds a DesktopSaver Start Menu group to the 'All Programs' section of your Start Menu."
-
-  StrCmp $0 2 "" +2
-    SendMessage $R0 ${WM_SETTEXT} 0 "STR:Starts DesktopSaver immediately after install is complete."
-
-  StrCmp $0 3 "" +2
-    SendMessage $R0 ${WM_SETTEXT} 0 "STR:Causes DesktopSaver to run each time Windows starts."
-FunctionEnd
-
-
-Section "!DesktopSaver"
+Section "!DesktopSaver" MainApp
 SectionIn RO
 
   ; stop the application if it's running (this only works on WinXP)
@@ -106,7 +89,7 @@ SectionIn RO
 SectionEnd
 
 
-Section "Start Menu Shortcuts"
+Section "Start Menu Shortcuts" Shortcuts
   CreateDirectory "$SMPROGRAMS\DesktopSaver"
   CreateShortCut "$SMPROGRAMS\DesktopSaver\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
   CreateShortCut "$SMPROGRAMS\DesktopSaver\DesktopSaver ${VERSION}.lnk" "$INSTDIR\desktop_saver.exe" "" "$INSTDIR\desktop_saver.exe" 0
@@ -114,11 +97,11 @@ Section "Start Menu Shortcuts"
   CreateShortCut "$SMPROGRAMS\DesktopSaver\DesktopSaver License.lnk" "$INSTDIR\license.txt"
 SectionEnd
 
-Section "Run After Install"
+Section "Run After Install" RunPostInstall
   Exec '"$INSTDIR\desktop_saver.exe"'
 SectionEnd
 
-Section /o "Always Run at Startup"
+Section /o "Always Run at Startup" AlwaysRun
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "DesktopSaver" '"$INSTDIR\desktop_saver.exe"'
 SectionEnd
 
@@ -162,3 +145,15 @@ Section "Uninstall"
 
 SectionEnd
 
+
+LangString DESC_MainApp ${LANG_ENGLISH} "Installs main DesktopSaver application files."
+LangString DESC_Shortcuts ${LANG_ENGLISH} "Adds a DesktopSaver Start Menu group to the 'All Programs' section of your Start Menu."
+LangString DESC_RunPostInstall ${LANG_ENGLISH} "Starts DesktopSaver immediately after install is complete."
+LangString DESC_AlwaysRun ${LANG_ENGLISH} "Causes DesktopSaver to run each time Windows starts."
+
+!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+  !insertmacro MUI_DESCRIPTION_TEXT ${MainApp} $(DESC_MainApp)
+  !insertmacro MUI_DESCRIPTION_TEXT ${Shortcuts} $(DESC_Shortcuts)
+  !insertmacro MUI_DESCRIPTION_TEXT ${RunPostInstall} $(DESC_RunPostInstall)
+  !insertmacro MUI_DESCRIPTION_TEXT ${AlwaysRun} $(DESC_AlwaysRun)
+!insertmacro MUI_FUNCTION_DESCRIPTION_END
