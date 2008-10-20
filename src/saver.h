@@ -47,6 +47,7 @@ public:
    void NamedProfileAdd(const std::wstring &name);
    void NamedProfileOverwrite(const std::wstring &name);
    void NamedProfileDelete(const std::wstring &name);
+   void NamedProfileAutostart(const std::wstring &name);
 
    bool GetRunOnStartup() const;
    void SetRunOnStartup(bool run);
@@ -55,6 +56,8 @@ public:
    void SetPollRate(PollRate r);
 
    unsigned int GetPollRateMilliseconds() const;
+
+   std::wstring GetAutostartProfileName() const;
 
    const HistoryList &History() const { return m_history_list; }
    const HistoryList &NamedProfiles() const { return m_named_profile_list; }

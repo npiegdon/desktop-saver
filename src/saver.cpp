@@ -52,8 +52,20 @@ DesktopSaver::DesktopSaver(wstring app_name)
    // slice to our list (on the very first run ever), or to compare to
    // the last known positions of all the icons (on subsequent runs).
    PollDesktopIcons();
-}
 
+   const std::wstring autostart = GetAutostartProfileName();
+   if (autostart.length() > 0)
+   {
+      for (HistoryIter h = m_named_profile_list.begin(); h != m_named_profile_list.end(); ++h)
+      {
+         if (h->GetName() != autostart) continue;
+
+         RestoreHistory(*h);
+         break;
+      }   
+   }
+
+}
 
 void DesktopSaver::deserialize()
 {
@@ -184,6 +196,15 @@ void DesktopSaver::NamedProfileDelete(const std::wstring &name)
 
    // After changes, we should write our results out to disk.
    serialize();
+}
+
+void DesktopSaver::NamedProfileAutostart(const std::wstring &name)
+{
+   Registry r(Registry::CurrentUser, m_app_name, L"");
+
+   // Setting it to the same value is how you turn off auto-start
+   if (GetAutostartProfileName() == name) r.Delete(L"profile_autostart");
+   else r.Write(L"profile_autostart", name);
 }
 
 IconHistory DesktopSaver::get_desktop(bool named_profile)
@@ -468,4 +489,14 @@ unsigned int DesktopSaver::GetPollRateMilliseconds() const
    timer_delay *= 1000; // (milliseconds per second)
 
    return timer_delay;
+}
+
+std::wstring DesktopSaver::GetAutostartProfileName() const
+{
+   Registry r(Registry::CurrentUser, m_app_name, L"");
+
+   std::wstring name;
+   r.Read(L"profile_autostart", &name, L"");
+
+   return name;
 }

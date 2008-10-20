@@ -32,11 +32,13 @@ static const int WM_Tray_Poll_Interval4 =  WM_USER + 11;
 
 // Lookups
 // NOTE: Order is very significant here
-static const int WM_Lookup_Begin =         WM_USER + 12;
-static const int WM_Tray_History =         WM_Lookup_Begin;
-static const int WM_Tray_Named_Profile =   WM_Tray_History + DesktopSaver::MaxIconHistoryCount;
-static const int WM_Tray_Profile_Update =  WM_Tray_Named_Profile + DesktopSaver::MaxProfileCount;
-static const int WM_Tray_Profile_Delete =  WM_Tray_Profile_Update + DesktopSaver::MaxProfileCount;
+static const int WM_Lookup_Begin =           WM_USER + 12;
+static const int WM_Tray_History =           WM_Lookup_Begin;
+static const int WM_Tray_Named_Profile =     WM_Tray_History + DesktopSaver::MaxIconHistoryCount;
+static const int WM_Tray_Profile_Update =    WM_Tray_Named_Profile + DesktopSaver::MaxProfileCount;
+static const int WM_Tray_Profile_Delete =    WM_Tray_Profile_Update + DesktopSaver::MaxProfileCount;
+static const int WM_Tray_Profile_Autostart = WM_Tray_Profile_Delete + DesktopSaver::MaxProfileCount;
+static const int WM_Lookup_End =             WM_Tray_Profile_Autostart + 1;
 
 static const LRESULT RET_DEF_PROC = -35;
 
@@ -276,6 +278,16 @@ HMENU DesktopSaverGui::build_dynamic_menu()
       AppendMenu(profile_delete, MF_STRING, WM_Tray_Profile_Delete + delete_choice++, i->GetName().c_str());
    }
 
+   // Build up each "Autostart Profile" menu item
+   std::wstring autostart_profilename = m_saver->GetAutostartProfileName();
+   HMENU profile_autostart = CreatePopupMenu();
+   int autostart_choice = 0;
+   for (HistoryRevIter i = named_profiles.rbegin(); i != named_profiles.rend(); ++i)
+   {
+      wstring name = i->GetName();
+      AppendMenu(profile_autostart, MF_STRING | (name == autostart_profilename ? MF_CHECKED : 0), WM_Tray_Profile_Autostart + autostart_choice++, name.c_str());
+   }
+
    HMENU menu = CreatePopupMenu();
 
    const HistoryList &history = m_saver->History();
@@ -319,9 +331,10 @@ HMENU DesktopSaverGui::build_dynamic_menu()
    }
 
    bool have_profiles = (named_profiles.size() > 0);
-   AppendMenu(menu, MF_STRING | (too_many_profiles?MF_GRAYED:0), WM_Tray_Profile_Create, L"&Create New Named Profile...");
-   AppendMenu(menu, MF_STRING | MF_POPUP | (have_profiles?0:MF_GRAYED), (UINT_PTR)profile_update, L"&Overwrite Named Profile");
-   AppendMenu(menu, MF_STRING | MF_POPUP | (have_profiles?0:MF_GRAYED), (UINT_PTR)profile_delete, L"&Delete Named Profile");
+   AppendMenu(menu, MF_STRING | (too_many_profiles?MF_GRAYED:0), WM_Tray_Profile_Create, L"&Create new named profile...");
+   AppendMenu(menu, MF_STRING | MF_POPUP | (have_profiles?0:MF_GRAYED), (UINT_PTR)profile_update, L"&Overwrite named profile");
+   AppendMenu(menu, MF_STRING | MF_POPUP | (have_profiles?0:MF_GRAYED), (UINT_PTR)profile_delete, L"&Delete named profile");
+   AppendMenu(menu, MF_STRING | MF_POPUP | (have_profiles?0:MF_GRAYED), (UINT_PTR)profile_autostart, L"&Set profile to auto-load at startup");
 
    AppendMenu(menu, MF_SEPARATOR, 0, 0);
 
@@ -432,7 +445,7 @@ LRESULT DesktopSaverGui::message_menu(WPARAM choice)
    default:
       {
          if (choice < WM_Lookup_Begin) break;
-         if (choice >= WM_Tray_Profile_Delete + DesktopSaver::MaxProfileCount) break;
+         if (choice >= WM_Lookup_End) break;
 
          bool handled = false;
 
@@ -484,6 +497,18 @@ LRESULT DesktopSaverGui::message_menu(WPARAM choice)
             {
                m_saver->NamedProfileDelete(name);
             }
+
+            handled = true;
+         }
+
+         if (choice >= WM_Tray_Profile_Autostart + 0 && choice < WM_Tray_Profile_Autostart + DesktopSaver::MaxProfileCount)
+         {
+            int menu_choice = ((UINT)choice - WM_Tray_Profile_Autostart);
+            int profile_choice = int(named_profiles.size() - menu_choice - 1);
+
+            wstring name = named_profiles[profile_choice].GetName();
+
+            m_saver->NamedProfileAutostart(name);
 
             handled = true;
          }
