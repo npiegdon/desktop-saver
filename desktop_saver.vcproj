@@ -148,7 +148,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/desktop_saver.exe"
 				LinkIncremental="1"
-				GenerateDebugInformation="false"
+				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -317,6 +317,14 @@
 			<Filter
 				Name="utility"
 				>
+				<File
+					RelativePath=".\src\ErrorTracker.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\ErrorTracker.h"
+					>
+				</File>
 				<File
 					RelativePath=".\src\file_reader.cpp"
 					>

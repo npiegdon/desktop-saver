@@ -4,6 +4,10 @@
 
 #include <iostream>
 #include <Windows.h>
+
+#include "ErrorTracker.h"
+#include "version.h"
+
 #include "saver_gui.h"
 #include "saver.h"
 
@@ -68,6 +72,8 @@ int AutoLoadProfile(wstring profileName)
 
 int WINAPI WinMain(HINSTANCE h_instance, HINSTANCE, PSTR cmdLine, int)
 {
+   ErrorTracker::Initialize(WSTRING(L"DesktopSaver-" << DESKTOPSAVER_VERSION << L"-crash-report.dmp"), true, true);
+
    if (cmdLine != 0 && cmdLine[0] != 0)
    {
       wstring profileName = GetCommandLineArguments();
