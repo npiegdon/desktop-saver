@@ -26,7 +26,9 @@ TrayIcon::~TrayIcon()
    NOTIFYICONDATA nid = build_icon_data();
    bool ret = (Shell_NotifyIcon(NIM_DELETE, &nid) == TRUE);
 
+#ifdef _DEBUG
    if (!ret) __debugbreak();
+#endif
 }
 
 void TrayIcon::RestoreIcon()
@@ -34,7 +36,9 @@ void TrayIcon::RestoreIcon()
    NOTIFYICONDATA nid = build_icon_data();
    bool ret = (Shell_NotifyIcon(NIM_ADD, &nid) == TRUE);
 
+#ifdef _DEBUG
    if (!ret) __debugbreak();
+#endif
 }
 
 void TrayIcon::SetTooltip(const std::wstring &tooltip)
@@ -45,7 +49,9 @@ void TrayIcon::SetTooltip(const std::wstring &tooltip)
    NOTIFYICONDATA nid = build_icon_data();
    bool ret = (Shell_NotifyIcon(NIM_MODIFY, &nid) == TRUE);
 
+#ifdef _DEBUG
    if (!ret) __debugbreak();
+#endif
 }
 
 NOTIFYICONDATA TrayIcon::build_icon_data()
