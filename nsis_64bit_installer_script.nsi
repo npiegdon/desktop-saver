@@ -14,7 +14,7 @@ BrandingText " "
 !define MUI_ABORTWARNING
 !define MUI_COMPONENTSPAGE_SMALLDESC
 
-!insertmacro MUI_PAGE_LICENSE "..\license.txt"
+!insertmacro MUI_PAGE_LICENSE "license.txt"
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
@@ -75,8 +75,8 @@ SectionIn RO
   SetOutPath $INSTDIR
 
   File "..\Release x64\desktop_saver.exe"
-  File "..\readme.txt"
-  File "..\license.txt"
+  File readme.txt
+  File license.txt
 
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\DesktopSaver "Install_Dir" "$INSTDIR"

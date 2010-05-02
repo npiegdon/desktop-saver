@@ -1,6 +1,6 @@
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual C++ Express 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "desktop_saver", "desktop_saver.vcproj", "{D468A733-5E1F-4E08-B08E-EF62A2561891}"
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual C++ Express 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "desktop_saver", "desktop_saver.vcxproj", "{D468A733-5E1F-4E08-B08E-EF62A2561891}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
