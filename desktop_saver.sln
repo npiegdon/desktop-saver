@@ -1,29 +1,23 @@
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual C++ Express 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "desktop_saver", "desktop_saver.vcxproj", "{D468A733-5E1F-4E08-B08E-EF62A2561891}"
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual C++ Express 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "desktop_saver", "desktop_saver.vcproj", "{D468A733-5E1F-4E08-B08E-EF62A2561891}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
-		Debug|Win64 = Debug|Win64
-		Release x64|Win32 = Release x64|Win32
-		Release x64|Win64 = Release x64|Win64
+		Debug|x64 = Debug|x64
 		Release|Win32 = Release|Win32
-		Release|Win64 = Release|Win64
+		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{D468A733-5E1F-4E08-B08E-EF62A2561891}.Debug|Win32.ActiveCfg = Debug|Win32
 		{D468A733-5E1F-4E08-B08E-EF62A2561891}.Debug|Win32.Build.0 = Debug|Win32
-		{D468A733-5E1F-4E08-B08E-EF62A2561891}.Debug|Win64.ActiveCfg = Debug|Win32
-		{D468A733-5E1F-4E08-B08E-EF62A2561891}.Debug|Win64.Build.0 = Debug|Win32
-		{D468A733-5E1F-4E08-B08E-EF62A2561891}.Release x64|Win32.ActiveCfg = Release x64|Win32
-		{D468A733-5E1F-4E08-B08E-EF62A2561891}.Release x64|Win32.Build.0 = Release x64|Win32
-		{D468A733-5E1F-4E08-B08E-EF62A2561891}.Release x64|Win64.ActiveCfg = Release x64|Win32
-		{D468A733-5E1F-4E08-B08E-EF62A2561891}.Release x64|Win64.Build.0 = Release x64|Win32
+		{D468A733-5E1F-4E08-B08E-EF62A2561891}.Debug|x64.ActiveCfg = Debug|x64
+		{D468A733-5E1F-4E08-B08E-EF62A2561891}.Debug|x64.Build.0 = Debug|x64
 		{D468A733-5E1F-4E08-B08E-EF62A2561891}.Release|Win32.ActiveCfg = Release|Win32
 		{D468A733-5E1F-4E08-B08E-EF62A2561891}.Release|Win32.Build.0 = Release|Win32
-		{D468A733-5E1F-4E08-B08E-EF62A2561891}.Release|Win64.ActiveCfg = Release|Win32
-		{D468A733-5E1F-4E08-B08E-EF62A2561891}.Release|Win64.Build.0 = Release|Win32
+		{D468A733-5E1F-4E08-B08E-EF62A2561891}.Release|x64.ActiveCfg = Release|x64
+		{D468A733-5E1F-4E08-B08E-EF62A2561891}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
