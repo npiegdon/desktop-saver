@@ -74,7 +74,7 @@ SectionIn RO
 
   SetOutPath $INSTDIR
 
-  File "..\Release x64\desktop_saver.exe"
+  File "x64\Release\desktop_saver.exe"
   File readme.txt
   File license.txt
 
