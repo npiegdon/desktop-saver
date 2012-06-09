@@ -3,6 +3,7 @@
 ;
 
 !include "MUI.nsh"
+!include "x64.nsh"
 
 !define VERSION 2.1
 
@@ -11,13 +12,18 @@ OutFile "DesktopSaver-${VERSION}-installer.exe"
 InstallDir $PROGRAMFILES\DesktopSaver
 BrandingText " "
 
+SetCompressor /SOLID lzma
+
 !define MUI_ABORTWARNING
 !define MUI_COMPONENTSPAGE_SMALLDESC
+!define MUI_FINISHPAGE_SHOWREADME $INSTDIR\readme.txt
+!define MUI_FINISHPAGE_SHOWREADME_TEXT "View DesktopSaver Readme"
 
 !insertmacro MUI_PAGE_LICENSE "license.txt"
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
+!insertmacro MUI_PAGE_FINISH
   
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
@@ -39,8 +45,7 @@ Function CloseProgram
   loop:
     FindWindow $0 $1
     IntCmp $0 0 done
-      #SendMessage $0 ${WM_DESTROY} 0 0
-      SendMessage $0 ${WM_CLOSE} 0 0
+    SendMessage $0 ${WM_CLOSE} 0 0
     Sleep 100 
     Goto loop 
   done: 
@@ -54,8 +59,7 @@ Function un.CloseProgram
   loop:
     FindWindow $0 $1
     IntCmp $0 0 done
-      #SendMessage $0 ${WM_DESTROY} 0 0
-      SendMessage $0 ${WM_CLOSE} 0 0
+    SendMessage $0 ${WM_CLOSE} 0 0
     Sleep 100 
     Goto loop 
   done: 
@@ -66,7 +70,7 @@ FunctionEnd
 Section "!DesktopSaver" MainApp
 SectionIn RO
 
-  ; stop the application if it's running (this only works on WinXP)
+  ; stop the application if it's running (this only works on WinXP+)
   DetailPrint "Attempting to stop any old versions of DesktopSaver before installing..."
   Push "desktop_saver"
   Call CloseProgram  
@@ -74,7 +78,14 @@ SectionIn RO
 
   SetOutPath $INSTDIR
 
-  File bin\desktop_saver.exe
+  ${If} ${RunningX64}
+    DetailPrint "Deploying 64-bit DesktopSaver."
+    File x64\Release\DesktopSaver.exe
+  ${Else}
+    DetailPrint "Deploying 32-bit DesktopSaver."
+    File Release\DesktopSaver.exe
+  ${EndIf}
+
   File readme.txt
   File license.txt
 
@@ -90,19 +101,15 @@ SectionEnd
 
 
 Section "Start Menu Shortcuts" Shortcuts
-  CreateDirectory "$SMPROGRAMS\DesktopSaver"
-  CreateShortCut "$SMPROGRAMS\DesktopSaver\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
-  CreateShortCut "$SMPROGRAMS\DesktopSaver\DesktopSaver ${VERSION}.lnk" "$INSTDIR\desktop_saver.exe" "" "$INSTDIR\desktop_saver.exe" 0
-  CreateShortCut "$SMPROGRAMS\DesktopSaver\DesktopSaver Readme.lnk" "$INSTDIR\readme.txt"
-  CreateShortCut "$SMPROGRAMS\DesktopSaver\DesktopSaver License.lnk" "$INSTDIR\license.txt"
+  CreateShortCut "$SMPROGRAMS\DesktopSaver ${VERSION}.lnk" "$INSTDIR\DesktopSaver.exe" "" "$INSTDIR\DesktopSaver.exe" 0
 SectionEnd
 
 Section "Run After Install" RunPostInstall
-  Exec '"$INSTDIR\desktop_saver.exe"'
+  Exec '"$INSTDIR\DesktopSaver.exe"'
 SectionEnd
 
 Section /o "Always Run at Startup" AlwaysRun
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "DesktopSaver" '"$INSTDIR\desktop_saver.exe"'
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "DesktopSaver" '"$INSTDIR\DesktopSaver.exe"'
 SectionEnd
 
 
@@ -131,15 +138,14 @@ Section "Uninstall"
   Delete $INSTDIR\readme.txt
   Delete $INSTDIR\license.txt
   Delete $INSTDIR\uninstall.exe
-  Delete $INSTDIR\desktop_saver.exe
+  Delete $INSTDIR\DesktopSaver.exe
 
   ; delete left over icon history file
   Delete "$APPDATA\DesktopSaver\*.*"
   RmDir "$APPDATA\DesktopSaver"
 
   ; remove Start Menu shortcuts
-  Delete "$SMPROGRAMS\DesktopSaver\*.*"
-  RMDir "$SMPROGRAMS\DesktopSaver"
+  Delete "$SMPROGRAMS\DesktopSaver ${VERSION}.lnk"
 
   RMDir /r "$INSTDIR"
 
