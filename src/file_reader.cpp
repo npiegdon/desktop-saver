@@ -14,8 +14,9 @@ using namespace std;
 FileReader::FileReader(const wstring &filename) : stream(0)
 {
    // Try opening the specified file
-   FILE *f = _wfopen(filename.c_str(), L"rb");
-   if (f == 0) return;
+   FILE *f = 0;
+   errno_t err = _wfopen_s(&f, filename.c_str(), L"rb");
+   if (err != 0 || f == 0) return;
 
    const static int BufferSize = 256;
    wchar_t buffer[BufferSize];
@@ -29,12 +30,6 @@ FileReader::FileReader(const wstring &filename) : stream(0)
    }
    
    stream = new wistringstream(whole_file.c_str());
-
-#pragma warning(push)
-#pragma warning(disable : 4996)
-   IMBUE_NULL_CODECVT(*stream);
-#pragma warning(pop)
-
    fclose(f);
 }
 
@@ -106,89 +101,3 @@ const wstring FileReader::ReadLine()
    return line;
 }
 
-
-
-
-
-
-
-
-
-FileReaderNonUnicode::FileReaderNonUnicode(const wstring &filename) : stream(0)
-{
-   // Try opening the specified file
-   FILE *f = _wfopen(filename.c_str(), L"rb");
-   if (f == 0) return;
-
-   const static int BufferSize = 256;
-   char buffer[BufferSize];
-   memset(buffer, 0, BufferSize*sizeof(char));
-
-   string whole_file;
-   while (fread(buffer, sizeof(char), BufferSize, f) > 0)
-   {
-      whole_file += buffer;
-      memset(buffer, 0, BufferSize*sizeof(char));
-   }
-   
-   stream = new istringstream(whole_file.c_str());
-
-   fclose(f);
-}
-
-FileReaderNonUnicode::~FileReaderNonUnicode()
-{
-   delete stream;
-}
-
-const string FileReaderNonUnicode::ReadLine()
-{
-   if (!stream) return "";
-
-   bool keepGoing;
-   string line;
-
-   do
-   {
-      if (!stream->good()) return "";
-
-      getline(*stream, line);
-
-      keepGoing = false;
-
-      // Strip comments out of the line
-      for (size_t i = 0; i < line.length(); ++i)
-      {
-         if (line[i] == comment_char)
-         {
-            line = line.substr(0, i);
-            break;
-         }
-      }
-
-      // If the now-comment-stripped line is empty, just
-      // keep grabbing input from the file, and ignore this line
-      if (line.length() == 0) keepGoing = true;
-
-      // If this doesn't appear to be empty or a comment line, a little
-      // more rigor is required to determine if this is a whitespace line
-      // (containing an accidental space or something)
-      if (line.length() > 0)
-      {
-         bool foundNonWhitespace = false;
-
-         for (int i = 0; i < (int)line.length(); ++i)
-         {
-            char character = line[i];
-            if (!isspace(character)) foundNonWhitespace = true;
-         }
-
-         // If after searching the whole line, we didn't find any
-         // regular characters at all, this is a whitespace line
-         if (!foundNonWhitespace) keepGoing = true;
-      }
-
-   } while (keepGoing);
-
-   return line;
-}

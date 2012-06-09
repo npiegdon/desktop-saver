@@ -25,7 +25,6 @@ DesktopSaver::DesktopSaver(wstring app_name)
    m_rate = read_poll_rate();
 
    // Set the location of the history file by starting with a default
-   m_history_filename_ANSI = L"icon_history.txt";
    m_history_filename_UNICODE = L"icon_history_2.txt";
 
    // Add the shell folder path if we've got one
@@ -73,49 +72,15 @@ void DesktopSaver::deserialize()
    m_history_list = HistoryList();
    m_named_profile_list = HistoryList();
 
-   // We support the older ANSI version of the icon history list.
-   // After importing it once, we delete it.
-   WIN32_FIND_DATA find_ansi;
-   HANDLE hFind;
-   hFind = FindFirstFile(m_history_filename_ANSI.c_str(), &find_ansi);
-   if (hFind != INVALID_HANDLE_VALUE) 
-   {
-      FindClose(hFind);
+    FileReader fr(m_history_filename_UNICODE);
 
-      // Force the file reader out of scope so it will
-      // close the file immediately
-      {
-         FileReaderNonUnicode fr(m_history_filename_ANSI);
-
-         // Read in IconHistory objects until one fails to load
-         IconHistory h(false);
-         while (h.DeserializeNonUnicode(&fr))
-         {
-            if (h.IsNamedProfile()) m_named_profile_list.push_back(h);
-            else m_history_list.push_back(h);
-         }
-      }
-
-      // Immediately write out a new Unicode version of
-      // the icon history and then rename the old ANSI one.
-      serialize();
-
-      const wstring backup_filename = WSTRING(m_history_filename_ANSI << L".bak");
-      DeleteFile(backup_filename.c_str());
-      MoveFile(m_history_filename_ANSI.c_str(), backup_filename.c_str());
-   } 
-   else 
-   {
-      FileReader fr(m_history_filename_UNICODE);
-
-      // Read in IconHistory objects until one fails to load
-      IconHistory h(false);
-      while (h.Deserialize(&fr))
-      {
-         if (h.IsNamedProfile()) m_named_profile_list.push_back(h);
-         else m_history_list.push_back(h);
-      }
-   }
+    // Read in IconHistory objects until one fails to load
+    IconHistory h(false);
+    while (h.Deserialize(&fr))
+    {
+        if (h.IsNamedProfile()) m_named_profile_list.push_back(h);
+        else m_history_list.push_back(h);
+    }
 
 }
 
@@ -137,11 +102,10 @@ void DesktopSaver::serialize() const
    for (HistoryIter i = m_named_profile_list.begin(); i != m_named_profile_list.end(); ++i)
    { file << i->Serialize() << end; }
 
+   FILE *f = 0;
+   errno_t err = _wfopen_s(&f, m_history_filename_UNICODE.c_str(), L"wb");
 
-   FILE *f;
-   f = _wfopen(m_history_filename_UNICODE.c_str(), L"wb");
-
-   if (f == 0)
+   if (err != 0 || f == 0)
    {
       STANDARD_ERROR(L"Could not save icon position information to the file:" << endl
          << m_history_filename_UNICODE << endl << endl << L"Check that you have write access to"

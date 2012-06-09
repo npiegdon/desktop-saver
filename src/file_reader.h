@@ -31,26 +31,4 @@ private:
    std::wistringstream *stream;
 };
 
-// A simple file manipulation class to read the plain-text with pound ('#')
-// comment line format.  (Whitespace allowed, with one data item per line)
-class FileReaderNonUnicode
-{
-public:
-   FileReaderNonUnicode(const std::wstring &filename);
-   ~FileReaderNonUnicode();
-
-   // Will skip whitespace and comment lines
-   // On eof, will continuously return empty strings
-   const std::string ReadLine();
-
-private:
-   // Explicitly deny copying and assignment
-   FileReaderNonUnicode(const FileReaderNonUnicode&);
-   FileReaderNonUnicode& operator=(FileReaderNonUnicode&);
-
-   const static char comment_char = '#';
-
-   std::istringstream *stream;
-};
-
 #endif

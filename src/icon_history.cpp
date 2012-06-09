@@ -81,69 +81,6 @@ bool IconHistory::Deserialize(FileReader *fr)
    return true;
 }
 
-bool IconHistory::DeserializeNonUnicode(FileReaderNonUnicode *fr)
-{
-   // Reset our icon list;
-   m_icons = IconList();
-   m_named_profile = false;
-
-   // Read the header
-   string ANSI_new_name = fr->ReadLine();
-   if (ANSI_new_name.length() <= 0) return false;
-
-   Widen<wchar_t> w;
-   wstring new_name = w(ANSI_new_name);
-
-   // If this is a named profile, the first
-   // string will be a special identifier.  The
-   // next line is always the profile's name.
-   if (new_name == named_identifier)
-   {
-      m_named_profile = true;
-
-      ANSI_new_name = fr->ReadLine();
-      if (ANSI_new_name.length() <= 0) return false;
-   }
-
-   m_name = w(ANSI_new_name);
-
-   // Parse the icon count using istringstreams
-   int icon_count = 0;
-   istringstream icon_count_stream(fr->ReadLine());
-   icon_count_stream >> icon_count;
-
-   // Don't check for (icon_count > 0), because
-   // that's actually perfectly acceptable.
-
-   // Parse each individual icon
-   for (int i = 0; i < icon_count; ++i)
-   {
-      Icon icon;
-
-      icon.name = w(fr->ReadLine());
-      istringstream x_stream(fr->ReadLine());
-      istringstream y_stream(fr->ReadLine());
-
-      x_stream >> icon.x;
-      y_stream >> icon.y;
-
-      if (!x_stream.bad() && !y_stream.bad() && icon.name.length() > 0)
-      {
-         AddIcon(icon);
-      }
-      else
-      {
-         STANDARD_ERROR(L"There was a problem reading from the history file.  This"
-            L" should fix itself automatically, but some profiles may have"
-            L" been lost.");
-
-         return false;
-      }
-   }
-
-   return true;
-}
-
 void IconHistory::AddIcon(Icon icon)
 {
    // This will fail on duplicates (see "KNOWN ISSUE" for

@@ -1,7 +1,7 @@
 DesktopSaver
 http://desktopsaver.sourceforge.net/
 
-Copyright (c)2006 Nicholas Piegdon
+Copyright (c)2012 Nicholas Piegdon
 See license.txt for license information
 
 DESCRIPTION
@@ -15,7 +15,7 @@ DesktopSaver is especially good at keeping track of icon positions over time wit
 REQUIREMENTS
 ============
 
-WinXP: should work.
+Win7, Vista, XP: should work.
 Win2k: might work.
 Win98: won't work.
 
@@ -52,10 +52,15 @@ Polling takes about 2ms if no changes have been made to the desktop, and only 15
 CHANGE LOG
 ==========
 
-DesktopSaver 2.0.x:
+DesktopSaver 2.1:
+
+NEW: Official 64-bit support, built against the Windows SDK v7.1.
 
 NEW: Auto-start profile option in menu to restore a named profile when the
      program is started.  (Patch submitted by Iwan Mouwen.)
+
+CHG: Dropped backward compatibility support for old ANSI save format that
+     hasn't been in use for six years.
 
 ------------------------------------------------------------------------------
 
