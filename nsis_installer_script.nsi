@@ -101,7 +101,8 @@ SectionEnd
 
 
 Section "Start Menu Shortcuts" Shortcuts
-  CreateShortCut "$SMPROGRAMS\DesktopSaver ${VERSION}.lnk" "$INSTDIR\DesktopSaver.exe" "" "$INSTDIR\DesktopSaver.exe" 0
+  SetShellVarContext all
+  CreateShortCut "$SMPROGRAMS\DesktopSaver.lnk" "$INSTDIR\DesktopSaver.exe" "" "$INSTDIR\DesktopSaver.exe" 0
 SectionEnd
 
 Section "Run After Install" RunPostInstall
@@ -140,12 +141,13 @@ Section "Uninstall"
   Delete $INSTDIR\uninstall.exe
   Delete $INSTDIR\DesktopSaver.exe
 
+  ; remove Start Menu shortcuts
+  SetShellVarContext all
+  Delete $SMPROGRAMS\DesktopSaver.lnk
+
   ; delete left over icon history file
   Delete "$APPDATA\DesktopSaver\*.*"
   RmDir "$APPDATA\DesktopSaver"
-
-  ; remove Start Menu shortcuts
-  Delete "$SMPROGRAMS\DesktopSaver ${VERSION}.lnk"
 
   RMDir /r "$INSTDIR"
 
