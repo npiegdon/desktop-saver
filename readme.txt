@@ -15,7 +15,7 @@ DesktopSaver is especially good at keeping track of icon positions over time wit
 REQUIREMENTS
 ============
 
-Win7, Vista, XP: should work.
+Win8, Win7, Vista, XP: should work.
 Win2k: might work.
 Win98: won't work.
 
@@ -52,9 +52,16 @@ Polling takes about 2ms if no changes have been made to the desktop, and only 15
 CHANGE LOG
 ==========
 
+DesktopSaver 2.2:
+
+FIX: Restoring from an old history state should no longer take multiple
+     attempts before everything ends up where it belongs.
+
+------------------------------------------------------------------------------
+
 DesktopSaver 2.1:
 
-NEW: Official 64-bit support, built against the Windows SDK v7.1.
+NEW: Support for 64-bit versions of Windows.
 
 NEW: Auto-start profile option in menu to restore a named profile when the
      program is started.  (Patch submitted by Iwan Mouwen.)
