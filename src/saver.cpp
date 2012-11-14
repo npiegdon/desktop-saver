@@ -17,7 +17,7 @@
 #include <sstream>
 using namespace std;
 
-DesktopSaver::DesktopSaver(wstring app_name)
+DesktopSaver::DesktopSaver(const wstring &app_name)
 {
    m_app_name = app_name;
 
@@ -283,7 +283,25 @@ void DesktopSaver::PollDesktopIcons()
    serialize();
 }
 
-void DesktopSaver::RestoreHistory(IconHistory history)
+void DesktopSaver::RestoreHistory(const IconHistory &history)
+{
+   IconHistory previous(get_desktop(false));
+
+   // Sometimes shimmying icons around bumps others into places they shouldn't be.  This
+   // happens when the new location is already occupied.  This is a little naive, but we
+   // just try to do it for a while until we reach a stable state.
+   for (int i = 0; i < 20; ++i)
+   {
+      RestoreHistoryOnce(history);
+
+      IconHistory current(get_desktop(false));
+      if (current.Identical(previous)) return;
+
+      previous = current;
+   }
+}
+
+void DesktopSaver::RestoreHistoryOnce(const IconHistory &history)
 {
    // Much of the following is based on a codeguru.com article written
    // by Jeroen-bart Engelen (who in turn used a lot of advice from others).

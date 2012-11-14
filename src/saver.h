@@ -36,13 +36,13 @@ const static PollRate DefaultPollRate = Interval2;
 class DesktopSaver
 {
 public:
-   DesktopSaver(std::wstring app_name);
+   DesktopSaver(const std::wstring &app_name);
 
    static const size_t MaxProfileCount = 10;
    static const size_t MaxIconHistoryCount = 25;
 
    void PollDesktopIcons();
-   void RestoreHistory(IconHistory history);
+   void RestoreHistory(const IconHistory &history);
 
    void NamedProfileAdd(const std::wstring &name);
    void NamedProfileOverwrite(const std::wstring &name);
@@ -67,6 +67,8 @@ private:
    // Save our history slices to file, to be read back next time
    void serialize() const;
    void deserialize();
+
+   void RestoreHistoryOnce(const IconHistory &history);
 
    IconHistory get_desktop(bool named_profile);
 

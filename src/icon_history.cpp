@@ -6,7 +6,6 @@
 #include "icon_history.h"
 #include "string_util.h"
 
-// For STANDARD_ERROR
 #include <windows.h>
 #include "saver.h"
 
@@ -14,7 +13,6 @@
 using namespace std;
 
 const wstring IconHistory::named_identifier(L"named_profile");
-
 
 IconHistory::IconHistory(bool named_profile)
 {
@@ -104,28 +102,20 @@ void IconHistory::CalculateName(const IconHistory &previous_history)
       bool found = false;
       for (IconIter j = previous_history.m_icons.begin(); j != previous_history.m_icons.end(); ++j)
       {
-         if (i->name == j->name)
+         if (i->name != j->name) continue;
+
+         found = true;
+         if (i->x != j->x || i->y != j->y)
          {
-            found = true;
-            if (i->x != j->x || i->y != j->y)
-            {
-               iconsMov++;
-               movName = i->name;
-            }
-            // else two identical icons
-
-            // If we've already found it, we can skip the rest of the list
-            break;
+            iconsMov++;
+            movName = i->name;
          }
-         // else two wholly unrelated icons
+         break;
       }
 
-      if (!found)
-      {
-         iconsAdd++;
-         addName = i->name;
-      }
-      // else we found the icon in question (whether moved or not), no change
+      if (found) continue;
+      iconsAdd++;
+      addName = i->name;
    }
 
    // Now check the other direction for deleted icons
@@ -134,22 +124,14 @@ void IconHistory::CalculateName(const IconHistory &previous_history)
       bool found = false;
       for (IconIter j = m_icons.begin(); j != m_icons.end(); ++j)
       {
-         if (i->name == j->name)
-         {
-            found = true;
-
-            // If we've already found it, we can skip the rest of the list
-            break;
-         }
-         // else two wholly unrelated icons
+         if (i->name != j->name) continue;
+         found = true;
+         break;
       }
+      if (found) continue;
 
-      if (!found)
-      {
-         iconsDel++;
-         delName = i->name;
-      }
-      // else we found the icon in question, no change
+      iconsDel++;
+      delName = i->name;
    }
 
    // Trim down super-long filenames for display purposes
@@ -186,11 +168,9 @@ bool IconHistory::Identical(const IconHistory &other) const
       bool found = false;
       for (IconIter j = other.m_icons.begin(); j != other.m_icons.end(); ++j)
       {
-         if (i->name == j->name && i->x == j->x && i->y == j->y)
-         {
-            found = true;
-            break;
-         }
+         if (i->name != j->name || i->x != j->x || i->y != j->y) continue;
+         found = true;
+         break;
       }
       if (!found) return false;
    }
@@ -200,13 +180,10 @@ bool IconHistory::Identical(const IconHistory &other) const
       bool found = false;
       for (IconIter j = m_icons.begin(); j != m_icons.end(); ++j)
       {
-         if (i->name == j->name && i->x == j->x && i->y == j->y)
-         {
-            found = true;
-            break;
-         }
+         if (i->name != j->name || i->x != j->x || i->y != j->y) continue;
+         found = true;
+         break;
       }
-
       if (!found) return false;
    }
 
@@ -220,7 +197,6 @@ wstring IconHistory::Serialize() const
    // NOTE: The multi-byte output requires this
    const static wstring end = L"\r\n";
 
-   // Write the header
    os << L": =============================================" << end;
    os << L": IconHistory \"" << m_name << L"\"" << end << end;
 
