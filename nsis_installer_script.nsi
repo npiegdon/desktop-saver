@@ -5,7 +5,7 @@
 !include "MUI.nsh"
 !include "x64.nsh"
 
-!define VERSION 2.2
+!define VERSION 2.3
 
 Name "DesktopSaver ${VERSION}"
 OutFile "DesktopSaver-${VERSION}-installer.exe"

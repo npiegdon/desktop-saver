@@ -52,6 +52,13 @@ Polling takes about 2ms if no changes have been made to the desktop, and only 15
 CHANGE LOG
 ==========
 
+DesktopSaver 2.3:
+
+FIX: Use the v110_xp compiler from VS2012 Update 1 to make things work on
+     WinXP again.
+
+------------------------------------------------------------------------------
+
 DesktopSaver 2.2:
 
 FIX: Restoring from an old history state should no longer take multiple
