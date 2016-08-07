@@ -4,12 +4,7 @@
 #include <string>
 #include <vector>
 #include "icon_history.h"
-
-// A handy ostringstream macro
-#ifndef WSTRING
-#include <sstream>
-#define WSTRING(v) ((static_cast<std::wostringstream&>(std::wostringstream().flush() << v)).str())
-#endif
+#include "string_util.h"
 
 #define INTERNAL_ERROR(err) MessageBox(0, WSTRING(L"DesktopSaver Error in file '" << __FILE__ << L"', line " << __LINE__ << L":\n" << err).c_str(), L"DesktopSaver Error!", MB_ICONERROR)
 #define STANDARD_ERROR(err) MessageBox(0, WSTRING(err).c_str(), L"DesktopSaver Error!", MB_ICONERROR | MB_APPLMODAL)

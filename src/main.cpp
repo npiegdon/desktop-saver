@@ -10,8 +10,6 @@
 
 using namespace std;
 
-
-
 wstring GetCommandLineArguments()
 {
    wstring result;

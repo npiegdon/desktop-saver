@@ -56,7 +56,6 @@ public:
    // true on success, false if the FileReader couldn't
    // supply enough input (for the "last in the file" case)
    bool Deserialize(FileReader *fr);
-   bool DeserializeNonUnicode(FileReaderNonUnicode *fr);
 
    std::wstring Serialize() const;
 

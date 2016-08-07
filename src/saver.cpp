@@ -9,8 +9,6 @@
 #include "registry.h"
 #include "version.h"
 
-#include "fstream_util.h"
-
 #include <fstream>
 #include <sstream>
 using namespace std;

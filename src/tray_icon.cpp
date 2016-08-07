@@ -1,9 +1,6 @@
 // DesktopSaver, (c)2006-2016 Nicholas Piegdon, MIT licensed
 
-#define STRSAFE_NO_DEPRECATE
 #include <windows.h>
-#include "strsafe.h"
-
 #include "tray_icon.h"
 
 int TrayIcon::m_icon_id_counter = 0;
@@ -63,7 +60,7 @@ NOTIFYICONDATA TrayIcon::build_icon_data()
    nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
 
    // Copy the tooltip string into the structure
-   StringCbCopy(nid.szTip, 64 * sizeof(wchar_t), m_tooltip.c_str());
+   wcscpy_s(nid.szTip, 64, m_tooltip.c_str());
 
    return nid;
 }

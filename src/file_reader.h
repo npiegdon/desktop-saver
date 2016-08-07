@@ -20,7 +20,6 @@ public:
 private:
    // Explicitly deny copying and assignment
    FileReader(const FileReader&);
-   FileReader& operator=(FileReader&);
 
    const static wchar_t comment_char = L':';
 

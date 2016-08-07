@@ -166,7 +166,6 @@
     <ClInclude Include="src\create_dialog.h" />
     <ClInclude Include="src\ErrorTracker.h" />
     <ClInclude Include="src\file_reader.h" />
-    <ClInclude Include="src\fstream_util.h" />
     <ClInclude Include="src\icon_history.h" />
     <ClInclude Include="src\registry.h" />
     <ClInclude Include="src\resource.h" />
