@@ -2,8 +2,9 @@
 
 #include "registry.h"
 #include <cassert>
+#include <memory>
 
-using std::wstring;
+using namespace std;
 
 Registry::Registry(const RootKey rootKey, const wstring program, const wstring company)
 {
@@ -109,15 +110,10 @@ const bool Registry::Read(const wstring keyName, wstring *out, const wstring def
    // Read the value again to get the actual string
    if (result == ERROR_SUCCESS)
    {
-      wchar_t *data = new wchar_t[size + 1];
-      if (!data) return false;
+      auto data = unique_ptr<wchar_t[]>(new wchar_t[size + 1]);
+      result = RegQueryValueEx(key, keyName.c_str(), 0, NULL, (LPBYTE)data.get(), &size);
 
-      result = RegQueryValueEx(key, keyName.c_str(), 0, NULL, (LPBYTE)data, &size);
-
-      if (result == ERROR_SUCCESS) *out = wstring(data);
-
-      if (data) delete[] data;
-      data = 0;
+      if (result == ERROR_SUCCESS) *out = wstring(data.get());
    }
 
    // 'out' would have only been set on success, otherwise the

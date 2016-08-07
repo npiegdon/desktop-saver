@@ -61,7 +61,7 @@ private:
 
    void RestoreHistoryOnce(const IconHistory &history);
 
-   IconHistory get_desktop(bool named_profile);
+   IconHistory get_desktop();
 
    PollRate read_poll_rate() const;
    void write_poll_rate();

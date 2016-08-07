@@ -71,7 +71,7 @@ void DesktopSaver::deserialize()
     FileReader fr(m_history_filename_UNICODE);
 
     // Read in IconHistory objects until one fails to load
-    IconHistory h(false);
+    IconHistory h;
     while (h.Deserialize(&fr))
     {
         if (h.IsNamedProfile()) m_named_profile_list.push_back(h);
@@ -104,8 +104,8 @@ void DesktopSaver::serialize() const
    if (err != 0 || f == 0)
    {
       STANDARD_ERROR(L"Could not save icon position information to the file:" << endl
-         << m_history_filename_UNICODE << endl << endl << L"Check that you have write access to"
-         << L" that location and that the file isn't in use.");
+         << m_history_filename_UNICODE << endl << endl
+         << L"Check that you have write access to that location and that the file isn't in use.");
 
       exit(1);
    }
@@ -116,8 +116,8 @@ void DesktopSaver::serialize() const
 
 void DesktopSaver::NamedProfileAdd(const std::wstring &name)
 {
-   IconHistory i = get_desktop(true);
-   i.ForceNamedProfileName(name);
+   IconHistory i = get_desktop();
+   i.SetProfileName(name);
 
    m_named_profile_list.push_back(i);
 
@@ -135,8 +135,8 @@ void DesktopSaver::NamedProfileOverwrite(const std::wstring &name)
    }
    if (i == m_named_profile_list.end()) INTERNAL_ERROR(L"Couldn't find profile '" << name << L"' to overwrite.");
 
-   *i = get_desktop(true);
-   i->ForceNamedProfileName(name);
+   *i = get_desktop();
+   i->SetProfileName(name);
 
    // After changes, we should write our results out to disk.
    serialize();
@@ -167,12 +167,12 @@ void DesktopSaver::NamedProfileAutostart(const std::wstring &name)
    else r.Write(L"profile_autostart", name);
 }
 
-IconHistory DesktopSaver::get_desktop(bool named_profile)
+IconHistory DesktopSaver::get_desktop()
 {
    // Much of the following is based on a codeguru.com article written
    // by Jeroen-bart Engelen (who in turn used a lot of advice from others).
 
-   IconHistory snapshot(named_profile);
+   IconHistory snapshot;
 
    // Find the desktop listview window
    HWND program_manager = FindWindow(NULL, (L"Program Manager"));                     if (program_manager == NULL) return snapshot;
@@ -252,7 +252,7 @@ void DesktopSaver::PollDesktopIcons()
       return;
    }
 
-   IconHistory history = get_desktop(false);
+   IconHistory history = get_desktop();
 
    if (m_history_list.size() > 0)
    {
@@ -281,7 +281,7 @@ void DesktopSaver::PollDesktopIcons()
 
 void DesktopSaver::RestoreHistory(const IconHistory &history)
 {
-   IconHistory previous(get_desktop(false));
+   IconHistory previous(get_desktop());
 
    // Sometimes shimmying icons around bumps others into places they shouldn't be.  This
    // happens when the new location is already occupied.  This is a little naive, but we
@@ -290,7 +290,7 @@ void DesktopSaver::RestoreHistory(const IconHistory &history)
    {
       RestoreHistoryOnce(history);
 
-      IconHistory current(get_desktop(false));
+      const IconHistory current = get_desktop();
       if (current.Identical(previous)) return;
 
       previous = current;
@@ -344,11 +344,11 @@ void DesktopSaver::RestoreHistoryOnce(const IconHistory &history)
       const wstring icon_name(icon_name_buf);
 
       // Run through the saved list of icons
-      const IconList icons = history.GetIcons();
-      for (IconIter j = icons.begin(); j != icons.end(); ++j)
+      const set<Icon> icons = history.GetIcons();
+      for (const auto &j : icons)
       {
          // If the saved and current names match, move the icon
-         if (j->name == icon_name) SendMessage(listview, LVM_SETITEMPOSITION, i, MAKELPARAM(j->x, j->y));
+         if (j.name == icon_name) SendMessage(listview, LVM_SETITEMPOSITION, i, MAKELPARAM(j.x, j.y));
       }
    }
 

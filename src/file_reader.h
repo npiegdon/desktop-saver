@@ -2,6 +2,7 @@
 #pragma once
 
 #include <string>
+#include <memory>
 #include <fstream>
 #include <sstream>
 
@@ -11,7 +12,6 @@ class FileReader
 {
 public:
    FileReader(const std::wstring &filename);
-   ~FileReader();
 
    // Will skip whitespace and comment lines
    // On eof, will continuously return empty strings
@@ -23,5 +23,5 @@ private:
 
    const static wchar_t comment_char = L':';
 
-   std::wistringstream *stream;
+   std::unique_ptr<std::wistringstream> stream;
 };

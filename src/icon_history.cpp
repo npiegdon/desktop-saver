@@ -12,16 +12,11 @@ using namespace std;
 
 const wstring IconHistory::named_identifier(L"named_profile");
 
-IconHistory::IconHistory(bool named_profile)
-{
-   m_named_profile = named_profile;
-   m_name = L"Initial History";
-}
+IconHistory::IconHistory() : m_named_profile(false), m_name(L"Initial History") { }
 
 bool IconHistory::Deserialize(FileReader *fr)
 {
-   // Reset our icon list;
-   m_icons = IconList();
+   m_icons.clear();
    m_named_profile = false;
 
    // Read the header
@@ -66,10 +61,7 @@ bool IconHistory::Deserialize(FileReader *fr)
       }
       else
       {
-         STANDARD_ERROR(L"There was a problem reading from the history file.  This"
-            L" should fix itself automatically, but some profiles may have"
-            L" been lost.");
-
+         STANDARD_ERROR(L"There was a problem reading from the history file.  This should fix itself automatically, but some profiles may have been lost.");
          return false;
       }
    }
@@ -95,41 +87,37 @@ void IconHistory::CalculateName(const IconHistory &previous_history)
    wstring movName;
 
    // Check first in one direction for moved and added icons
-   for (IconIter i = m_icons.begin(); i != m_icons.end(); ++i)
+   for (const auto &i : m_icons)
    {
       bool found = false;
-      for (IconIter j = previous_history.m_icons.begin(); j != previous_history.m_icons.end(); ++j)
+      for (const auto &j : previous_history.m_icons)
       {
-         if (i->name != j->name) continue;
+         if (i.name != j.name) continue;
 
          found = true;
-         if (i->x != j->x || i->y != j->y)
-         {
-            iconsMov++;
-            movName = i->name;
-         }
+         if (i.x != j.x || i.y != j.y) { iconsMov++; movName = i.name; }
          break;
       }
 
       if (found) continue;
       iconsAdd++;
-      addName = i->name;
+      addName = i.name;
    }
 
    // Now check the other direction for deleted icons
-   for (IconIter i = previous_history.m_icons.begin(); i != previous_history.m_icons.end(); ++i)
+   for (const auto &i : previous_history.m_icons)
    {
       bool found = false;
-      for (IconIter j = m_icons.begin(); j != m_icons.end(); ++j)
+      for (const auto &j : m_icons)
       {
-         if (i->name != j->name) continue;
+         if (i.name != j.name) continue;
          found = true;
          break;
       }
       if (found) continue;
 
       iconsDel++;
-      delName = i->name;
+      delName = i.name;
    }
 
    // Trim down super-long filenames for display purposes
@@ -161,24 +149,24 @@ bool IconHistory::Identical(const IconHistory &other) const
    // Match the icon set in both directions.  This will
    // cover additions, deletions, and moved icons.
 
-   for (IconIter i = m_icons.begin(); i != m_icons.end(); ++i)
+   for (const auto &i : m_icons)
    {
       bool found = false;
-      for (IconIter j = other.m_icons.begin(); j != other.m_icons.end(); ++j)
+      for (const auto &j : other.m_icons)
       {
-         if (i->name != j->name || i->x != j->x || i->y != j->y) continue;
+         if (i.name != j.name || i.x != j.x || i.y != j.y) continue;
          found = true;
          break;
       }
       if (!found) return false;
    }
 
-   for (IconIter i = other.m_icons.begin(); i != other.m_icons.end(); ++i)
+   for (const auto &i : other.m_icons)
    {
       bool found = false;
-      for (IconIter j = m_icons.begin(); j != m_icons.end(); ++j)
+      for (const auto &j : m_icons)
       {
-         if (i->name != j->name || i->x != j->x || i->y != j->y) continue;
+         if (i.name != j.name || i.x != j.x || i.y != j.y) continue;
          found = true;
          break;
       }
@@ -191,31 +179,26 @@ bool IconHistory::Identical(const IconHistory &other) const
 wstring IconHistory::Serialize() const
 {
    wostringstream os;
+   os << L": =============================================" << endl;
+   os << L": IconHistory \"" << m_name << L"\"" << endl << endl;
 
-   // NOTE: The multi-byte output requires this
-   const static wstring end = L"\r\n";
+   if (IsNamedProfile()) { os << named_identifier << endl; }
 
-   os << L": =============================================" << end;
-   os << L": IconHistory \"" << m_name << L"\"" << end << end;
-
-   if (IsNamedProfile()) { os << named_identifier << end; }
-
-   os << m_name << end;
-   os << (unsigned int)m_icons.size() << end;
-   os << end;
+   os << m_name << endl;
+   os << (unsigned int)m_icons.size() << endl;
+   os << endl;
 
    // Write each icon
    int counter = 0;
-   for (IconIter i = m_icons.begin(); i != m_icons.end(); ++i)
+   for (const auto &i : m_icons)
    {
-      os << i->name << end;
-      os << i->x << end;
-      os << i->y << end;
-      os << end;
+      os << i.name << endl;
+      os << i.x << endl;
+      os << i.y << endl;
+      os << endl;
    }
 
-   os << end;
-
+   os << endl;
    return os.str();
 }
 

@@ -25,13 +25,10 @@ class FileReaderNonUnicode;
 struct Icon
 {
    std::wstring name;
-   long x;
-   long y;
+   long x, y;
 
    bool operator <(const Icon &i) const { return (name < i.name); }
 };
-typedef std::set<Icon> IconList;
-typedef IconList::const_iterator IconIter;
 
 // Keeps track of one desktop icon positioning instance
 class IconHistory
@@ -39,18 +36,18 @@ class IconHistory
 public:
    // Creates a blank history.  Follow up with several add_icon() calls,
    // and finish with a calculate_name() call.
-   IconHistory(bool named_profile);
+   IconHistory();
 
    std::wstring GetName() const { return m_name; }
    void CalculateName(const IconHistory &previous_history);
-   void ForceNamedProfileName(const std::wstring &name) { m_name = name; }
+   void SetProfileName(const std::wstring &name) { m_name = name; m_named_profile = !m_name.empty(); }
 
    bool IsNamedProfile() const { return m_named_profile; }
 
    void AddIcon(Icon icon);
    bool Identical(const IconHistory &other) const;
 
-   const IconList GetIcons() const { return m_icons; }
+   const std::set<Icon> GetIcons() const { return m_icons; }
 
    // Restore icon history from file.  Returns
    // true on success, false if the FileReader couldn't
@@ -60,7 +57,7 @@ public:
    std::wstring Serialize() const;
 
 private:
-   IconList m_icons;
+   std::set<Icon> m_icons;
 
    bool m_named_profile;
    std::wstring m_name;

@@ -83,10 +83,10 @@ DesktopSaverGui::DesktopSaverGui(HINSTANCE hinst)
    UpdateWindow(m_hwnd);
 
    // Create the system tray icon
-   m_tray_icon = new TrayIcon(m_hwnd, WM_TRAYMESSAGE, LoadIcon(hinst, L"IDI_APP_ICON"));
+   m_tray_icon = make_unique<TrayIcon>(m_hwnd, WM_TRAYMESSAGE, LoadIcon(hinst, L"IDI_APP_ICON"));
    m_tray_icon->SetTooltip(WSTRING(m_app_name << L" " << DESKTOPSAVER_VERSION));
 
-   m_saver = new DesktopSaver(m_app_name);
+   m_saver = make_unique<DesktopSaver>(m_app_name);
 
    // Create our desktop icon polling timer
    m_timer_id = 1;
@@ -94,11 +94,8 @@ DesktopSaverGui::DesktopSaverGui(HINSTANCE hinst)
 
 }
 
-DesktopSaverGui::~DesktopSaverGui()
-{
-   if (m_tray_icon) delete m_tray_icon;
-   if (m_saver) delete m_saver;
-}
+// Required to hide destructor in this compilation unit (for the sake of forward declared unique_ptrs)
+DesktopSaverGui::~DesktopSaverGui() { }
 
 int DesktopSaverGui::Run()
 {
@@ -135,12 +132,13 @@ LRESULT CALLBACK DesktopSaverGui::proc(HWND hwnd, UINT message, WPARAM wparam, L
    case WM_TRAYMESSAGE: { return gui->message_tray(wparam, lparam); }
    case WM_COMMAND:     { return gui->message_menu(wparam); }
    case WM_TIMER:       { return gui->message_timer(wparam); return 0; }
-   default:             {
+   default:
+   {
       LRESULT ret = gui->message_default(message, wparam, lparam);
 
       if (ret == RET_DEF_PROC) break;
       else return ret;
-                        }
+   }
    }
    return DefWindowProc(hwnd, message, wparam, lparam);
 }
@@ -264,17 +262,13 @@ HMENU DesktopSaverGui::build_dynamic_menu()
    HMENU profile_update = CreatePopupMenu();
    int update_choice = 0;
    for (HistoryRevIter i = named_profiles.rbegin(); i != named_profiles.rend(); ++i)
-   {
       AppendMenu(profile_update, MF_STRING, WM_Tray_Profile_Update + update_choice++, i->GetName().c_str());
-   }
 
    // Build up each "Delete Profile" menu item
    HMENU profile_delete = CreatePopupMenu();
    int delete_choice = 0;
    for (HistoryRevIter i = named_profiles.rbegin(); i != named_profiles.rend(); ++i)
-   {
       AppendMenu(profile_delete, MF_STRING, WM_Tray_Profile_Delete + delete_choice++, i->GetName().c_str());
-   }
 
    // Build up each "Autostart Profile" menu item
    std::wstring autostart_profilename = m_saver->GetAutostartProfileName();
@@ -299,9 +293,7 @@ HMENU DesktopSaverGui::build_dynamic_menu()
       // Build up each history menu item
       int history_choice = 0;
       for (HistoryRevIter i = history.rbegin(); i != history.rend(); ++i)
-      {
          AppendMenu(menu, MF_STRING, WM_Tray_History + history_choice++, i->GetName().c_str());
-      }
 
       // Decide whether to gray-out the "Clear History" option, if we don't
       // have any history slices to clear
@@ -315,18 +307,14 @@ HMENU DesktopSaverGui::build_dynamic_menu()
    // Add each named profile to this list
    int named_choice = 0;
    for (HistoryRevIter i = named_profiles.rbegin(); i != named_profiles.rend(); ++i)
-   {
       AppendMenu(menu, MF_STRING, WM_Tray_Named_Profile + named_choice++, i->GetName().c_str());
-   }
 
 
    // If we've reached our maximum number of user-created
    // named profiles, disable the "Create" command
    bool too_many_profiles = false;
    if (m_saver->NamedProfiles().size() >= DesktopSaver::MaxProfileCount)
-   {
       too_many_profiles = true;
-   }
 
    bool have_profiles = (named_profiles.size() > 0);
    AppendMenu(menu, MF_STRING | (too_many_profiles?MF_GRAYED:0), WM_Tray_Profile_Create, L"&Create new named profile...");
@@ -350,11 +338,8 @@ LRESULT DesktopSaverGui::message_menu(WPARAM choice)
    {
    case WM_Tray_History_Clear:
       {
-         if (ASK_QUESTION(L"Are you sure you want to erase your icon position history?\n"
-            L"(Your named profiles will remain intact)."))
-         {
+         if (ASK_QUESTION(L"Are you sure you want to erase your icon position history?\n(Your named profiles will remain intact)."))
             m_saver->ClearHistory();
-         }
 
          break;
       }
@@ -380,13 +365,12 @@ LRESULT DesktopSaverGui::message_menu(WPARAM choice)
          bool duplicate = false;
          wstring duplicate_profile_name;
 
-         const HistoryList history = m_saver->NamedProfiles();
-         for (size_t i = 0; i < history.size(); ++i)
+         for (const auto &h : m_saver->NamedProfiles())
          {
             wstring name_lower = name;
             std::transform(name.begin(), name.end(), name_lower.begin(), tolower);
 
-            wstring other = history[i].GetName();
+            const wstring other = h.GetName();
 
             wstring other_lower = other;
             std::transform(other.begin(), other.end(), other_lower.begin(), tolower);
@@ -399,12 +383,8 @@ LRESULT DesktopSaverGui::message_menu(WPARAM choice)
             }
          }
 
-         if (duplicate)
-         {
-            if (ASK_QUESTION(L"A profile with the name '" << duplicate_profile_name << L"' already exists.  Overwrite?"))
-            { m_saver->NamedProfileOverwrite(duplicate_profile_name); }
-         }
-         else { m_saver->NamedProfileAdd(name); }
+         if (duplicate && ASK_QUESTION(L"A profile with the name '" << duplicate_profile_name << L"' already exists.  Overwrite?")) m_saver->NamedProfileOverwrite(duplicate_profile_name);
+         else m_saver->NamedProfileAdd(name);
 
          break;
       }
@@ -420,8 +400,7 @@ LRESULT DesktopSaverGui::message_menu(WPARAM choice)
          PollRate current = m_saver->GetPollRate();
 
          if (current != DisableHistory
-            && ASK_QUESTION(L"Disabling your history will erase all history snapshots.  Continue?\n"
-            L"(Your named profiles will remain intact)."))
+            && ASK_QUESTION(L"Disabling your history will erase all history snapshots.  Continue?\n(Your named profiles will remain intact)."))
          {
             // We must set the poll rate before clearing the history
             // otherwise a poll will occur *just* after the clear
@@ -476,11 +455,7 @@ LRESULT DesktopSaverGui::message_menu(WPARAM choice)
 
             wstring name = named_profiles[profile_choice].GetName();
 
-            if (ASK_QUESTION(L"Overwrite '" << name << L"' profile with current desktop snapshot?"))
-            {
-               m_saver->NamedProfileOverwrite(name);
-            }
-
+            if (ASK_QUESTION(L"Overwrite '" << name << L"' profile with current desktop snapshot?")) m_saver->NamedProfileOverwrite(name);
             handled = true;
          }
 
@@ -491,11 +466,7 @@ LRESULT DesktopSaverGui::message_menu(WPARAM choice)
 
             wstring name = named_profiles[profile_choice].GetName();
 
-            if (ASK_QUESTION(L"Are you sure you want to delete the '" << name << L"' profile?"))
-            {
-               m_saver->NamedProfileDelete(name);
-            }
-
+            if (ASK_QUESTION(L"Are you sure you want to delete the '" << name << L"' profile?")) m_saver->NamedProfileDelete(name);
             handled = true;
          }
 

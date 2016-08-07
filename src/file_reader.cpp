@@ -7,7 +7,7 @@
 
 using namespace std;
 
-FileReader::FileReader(const wstring &filename) : stream(0)
+FileReader::FileReader(const wstring &filename)
 {
    // Try opening the specified file
    FILE *f = 0;
@@ -25,13 +25,8 @@ FileReader::FileReader(const wstring &filename) : stream(0)
       memset(buffer, 0, BufferSize*sizeof(wchar_t));
    }
    
-   stream = new wistringstream(whole_file.c_str());
+   stream = make_unique<wistringstream>(whole_file.c_str());
    fclose(f);
-}
-
-FileReader::~FileReader()
-{
-   delete stream;
 }
 
 const wstring FileReader::ReadLine()
