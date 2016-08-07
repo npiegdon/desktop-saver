@@ -83,7 +83,7 @@ DesktopSaverGui::DesktopSaverGui(HINSTANCE hinst)
    UpdateWindow(m_hwnd);
 
    // Create the system tray icon
-   m_tray_icon = make_unique<TrayIcon>(m_hwnd, WM_TRAYMESSAGE, LoadIcon(hinst, L"IDI_APP_ICON"));
+   m_tray_icon = make_unique<TrayIcon>(m_hwnd, WM_TRAYMESSAGE, LoadIcon(hinst, L"IDI_TRAY_ICON"));
    m_tray_icon->SetTooltip(WSTRING(m_app_name << L" " << DESKTOPSAVER_VERSION));
 
    m_saver = make_unique<DesktopSaver>(m_app_name);
