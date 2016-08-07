@@ -6,8 +6,12 @@
 #include "ErrorTracker.h"
 
 #include <Windows.h>
-#include <DbgHelp.h>
 #include <shlobj.h>
+
+#pragma warning(push)
+#pragma warning(disable : 4091)
+#include <DbgHelp.h>
+#pragma warning(pop)
 
 using namespace std;
 
