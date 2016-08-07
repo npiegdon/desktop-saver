@@ -69,6 +69,14 @@ int AutoLoadProfile(wstring profileName)
 
 int WINAPI WinMain(HINSTANCE h_instance, HINSTANCE, PSTR cmdLine, int)
 {
+   BOOL is64bit = FALSE;
+   IsWow64Process(GetCurrentProcess(), &is64bit);
+   if (sizeof(void*) == 4 && is64bit)
+   {
+      MessageBox(nullptr, L"You must run the 64-bit version of DesktopSaver on 64-bit versions of Windows.", L"64-bit Version Required", MB_ICONEXCLAMATION);
+      return 0;
+   }
+
    ErrorTracker::Initialize(WSTRING(L"DesktopSaver-" << DESKTOPSAVER_VERSION << L"-crash-report.dmp"), true, true);
 
    if (cmdLine != 0 && cmdLine[0] != 0)
