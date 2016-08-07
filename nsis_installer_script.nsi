@@ -16,10 +16,7 @@ SetCompressor /SOLID lzma
 
 !define MUI_ABORTWARNING
 !define MUI_COMPONENTSPAGE_SMALLDESC
-!define MUI_FINISHPAGE_SHOWREADME $INSTDIR\readme.txt
-!define MUI_FINISHPAGE_SHOWREADME_TEXT "View DesktopSaver Readme"
 
-!insertmacro MUI_PAGE_LICENSE "license.txt"
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
@@ -86,7 +83,6 @@ SectionIn RO
     File Release\DesktopSaver.exe
   ${EndIf}
 
-  File readme.txt
   File license.txt
 
   ; Write the installation path into the registry
