@@ -116,7 +116,7 @@ void DesktopSaver::serialize() const
 
 void DesktopSaver::NamedProfileAdd(const std::wstring &name)
 {
-   IconHistory i = get_desktop();
+   IconHistory i = ReadDesktop();
    i.SetProfileName(name);
 
    m_named_profile_list.push_back(i);
@@ -135,7 +135,7 @@ void DesktopSaver::NamedProfileOverwrite(const std::wstring &name)
    }
    if (i == m_named_profile_list.end()) INTERNAL_ERROR(L"Couldn't find profile '" << name << L"' to overwrite.");
 
-   *i = get_desktop();
+   *i = ReadDesktop();
    i->SetProfileName(name);
 
    // After changes, we should write our results out to disk.
@@ -167,7 +167,7 @@ void DesktopSaver::NamedProfileAutostart(const std::wstring &name)
    else r.Write(L"profile_autostart", name);
 }
 
-IconHistory DesktopSaver::get_desktop()
+IconHistory DesktopSaver::ReadDesktop()
 {
    // Much of the following is based on a codeguru.com article written
    // by Jeroen-bart Engelen (who in turn used a lot of advice from others).
@@ -252,8 +252,7 @@ void DesktopSaver::PollDesktopIcons()
       return;
    }
 
-   IconHistory history = get_desktop();
-
+   IconHistory history = ReadDesktop();
    if (m_history_list.size() > 0)
    {
       // Skip adding this slice to our history list if nothing has changed
@@ -279,22 +278,25 @@ void DesktopSaver::PollDesktopIcons()
    serialize();
 }
 
-void DesktopSaver::RestoreHistory(const IconHistory &history)
+void DesktopSaver::RestoreHistory(const IconHistory history)
 {
-   IconHistory previous(get_desktop());
+   IconHistory previous = ReadDesktop();
 
    // Sometimes shimmying icons around bumps others into places they shouldn't be.  This
    // happens when the new location is already occupied.  This is a little naive, but we
    // just try to do it for a while until we reach a stable state.
-   for (int i = 0; i < 20; ++i)
+   for (int i = 0; i < 3; ++i)
    {
       RestoreHistoryOnce(history);
 
-      const IconHistory current = get_desktop();
+      const IconHistory current = ReadDesktop();
       if (current.Identical(previous)) return;
 
       previous = current;
    }
+
+   // Force a poll just afterwards to log the new history
+   PollDesktopIcons();
 }
 
 void DesktopSaver::RestoreHistoryOnce(const IconHistory &history)
@@ -356,9 +358,6 @@ void DesktopSaver::RestoreHistoryOnce(const IconHistory &history)
    VirtualFreeEx(explorer, remote_item, 0, MEM_RELEASE);
    VirtualFreeEx(explorer, remote_text, 0, MEM_RELEASE);
    CloseHandle(explorer);
-
-   // Force a poll just afterwards to log the new history
-   PollDesktopIcons();
 }
 
 void DesktopSaver::ClearHistory()

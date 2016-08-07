@@ -33,7 +33,7 @@ public:
    static const size_t MaxIconHistoryCount = 25;
 
    void PollDesktopIcons();
-   void RestoreHistory(const IconHistory &history);
+   void RestoreHistory(const IconHistory history);
 
    void NamedProfileAdd(const std::wstring &name);
    void NamedProfileOverwrite(const std::wstring &name);
@@ -59,9 +59,8 @@ private:
    void serialize() const;
    void deserialize();
 
-   void RestoreHistoryOnce(const IconHistory &history);
-
-   IconHistory get_desktop();
+   static void RestoreHistoryOnce(const IconHistory &history);
+   static IconHistory ReadDesktop();
 
    PollRate read_poll_rate() const;
    void write_poll_rate();
