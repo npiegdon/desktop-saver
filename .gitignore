@@ -1,5 +1,6 @@
 *.exe
 *.db
+*.opendb
 .vs
 Debug
 Release

@@ -1,9 +1,5 @@
-// DesktopSaver
-// Copyright (c)2006 Nicholas Piegdon
-// See license.txt for license information
-
-#ifndef __SAVER_H
-#define __SAVER_H
+// DesktopSaver, (c)2006-2016 Nicholas Piegdon, MIT licensed
+#pragma once
 
 #include <string>
 #include <vector>
@@ -89,5 +85,3 @@ private:
    HistoryList m_history_list;
    HistoryList m_named_profile_list;
 };
-
-#endif

@@ -1,9 +1,5 @@
-// DesktopSaver
-// Copyright (c)2006 Nicholas Piegdon
-// See license.txt for license information
-
-#ifndef __TRAY_ICON_H
-#define __TRAY_ICON_H
+// DesktopSaver, (c)2006-2016 Nicholas Piegdon, MIT licensed
+#pragma once
 
 #include <windows.h>
 #include <string>
@@ -34,5 +30,3 @@ private:
 
    static int m_icon_id_counter;
 };
-
-#endif

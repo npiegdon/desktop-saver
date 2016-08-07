@@ -1,6 +1,5 @@
-
-#ifndef __ERROR_TRACKER_H
-#define __ERROR_TRACKER_H
+// DesktopSaver, (c)2006-2016 Nicholas Piegdon, MIT licensed
+#pragma once
 
 #include <string>
 
@@ -18,5 +17,3 @@ public:
    // location.  Call Initialize() first.
    static void PerformDump();
 };
-
-#endif

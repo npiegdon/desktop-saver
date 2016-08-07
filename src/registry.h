@@ -1,9 +1,5 @@
-// DesktopSaver
-// Copyright (c)2006 Nicholas Piegdon
-// See license.txt for license information
-
-#ifndef __REGISTRY_H
-#define __REGISTRY_H
+// DesktopSaver, (c)2006-2016 Nicholas Piegdon, MIT licensed
+#pragma once
 
 #include <string>
 #include <windows.h>
@@ -41,5 +37,3 @@ private:
    bool good;
    HKEY key;
 };
-
-#endif

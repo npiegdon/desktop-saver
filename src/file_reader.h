@@ -1,9 +1,5 @@
-// DesktopSaver
-// Copyright (c)2006 Nicholas Piegdon
-// See license.txt for license information
-
-#ifndef __FILE_READER_H
-#define __FILE_READER_H
+// DesktopSaver, (c)2006-2016 Nicholas Piegdon, MIT licensed
+#pragma once
 
 #include <string>
 #include <fstream>
@@ -30,5 +26,3 @@ private:
 
    std::wistringstream *stream;
 };
-
-#endif

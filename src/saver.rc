@@ -1,3 +1,5 @@
+// DesktopSaver, (c)2006-2016 Nicholas Piegdon, MIT licensed
+
 #include "resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS

@@ -1,9 +1,5 @@
-// Piano Hero
-// Copyright (c)2006 Nicholas Piegdon
-// See license.txt for license information
-
-#ifndef __STRING_UTIL_H
-#define __STRING_UTIL_H
+// DesktopSaver, (c)2006-2016 Nicholas Piegdon, MIT licensed
+#pragma once
 
 // Handy string macros
 
@@ -15,6 +11,4 @@
 #ifndef WSTRING
 #include <sstream>
 #define WSTRING(v) ((static_cast<std::wostringstream&>(std::wostringstream().flush() << v)).str())
-#endif
-
 #endif

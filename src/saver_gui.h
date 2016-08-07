@@ -1,9 +1,5 @@
-// DesktopSaver
-// Copyright (c)2006 Nicholas Piegdon
-// See license.txt for license information
-
-#ifndef __SAVER_GUI_H
-#define __SAVER_GUI_H
+// DesktopSaver, (c)2006-2016 Nicholas Piegdon, MIT licensed
+#pragma once
 
 #include <windows.h>
 #include <string>
@@ -47,5 +43,3 @@ private:
 
    TrayIcon *m_tray_icon;
 };
-
-#endif

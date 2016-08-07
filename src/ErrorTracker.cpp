@@ -1,3 +1,4 @@
+// DesktopSaver, (c)2006-2016 Nicholas Piegdon, MIT licensed
 
 #pragma comment(lib, "DbgHelp.lib")
 

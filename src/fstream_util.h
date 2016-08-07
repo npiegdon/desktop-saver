@@ -1,9 +1,5 @@
-// DesktopSaver
-// Copyright (c)2006 Nicholas Piegdon
-// See license.txt for license information
-
-#ifndef __FSTREAM_UTIL_H
-#define __FSTREAM_H
+// DesktopSaver, (c)2006-2016 Nicholas Piegdon, MIT licensed
+#pragma once
 
 //
 // NOTE: The following code was taken from:
@@ -74,5 +70,3 @@ protected:
    loc._Addfac( pNullCodecvt , NullCodecvt::id, NullCodecvt::_Getcat() ); \
    (outputFile).imbue( loc ); \
 }
-
-#endif

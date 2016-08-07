@@ -1,6 +1,4 @@
-// DesktopSaver
-// Copyright (c)2006 Nicholas Piegdon
-// See license.txt for license information
+// DesktopSaver, (c)2006-2016 Nicholas Piegdon, MIT licensed
 
 #include "create_dialog.h"
 #include "resource.h"

@@ -1,3 +1,5 @@
+// DesktopSaver, (c)2006-2016 Nicholas Piegdon, MIT licensed
+
 #define VS_VERSION_INFO                 1
 #define IDD_NEW_PROFILE                 102
 #define IDC_NAME_BOX                    1003

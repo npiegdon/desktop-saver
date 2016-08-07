@@ -1,9 +1,5 @@
-// DesktopSaver
-// Copyright (c)2006 Nicholas Piegdon
-// See license.txt for license information
-
-#ifndef __ICON_HISTORY_H
-#define __ICON_HISTORY_H
+// DesktopSaver, (c)2006-2016 Nicholas Piegdon, MIT licensed
+#pragma once
 
 #include <string>
 #include <set>
@@ -72,5 +68,3 @@ private:
 
    const static std::wstring named_identifier;
 };
-
-#endif
