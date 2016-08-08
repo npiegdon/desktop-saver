@@ -9,6 +9,7 @@
 #include "registry.h"
 #include "version.h"
 
+#include <algorithm>
 #include <fstream>
 #include <sstream>
 using namespace std;
@@ -233,35 +234,25 @@ IconHistory DesktopSaver::ReadDesktop()
 
 void DesktopSaver::PollDesktopIcons()
 {
-   if (GetPollRate() == DisableHistory)
-   {
-      m_history_list.clear();
-      return;
-   }
+   auto &h = m_history_list;
+   if (GetPollRate() == DisableHistory) { h.clear(); return; }
 
    IconHistory history = ReadDesktop();
-   if (m_history_list.size() > 0)
+   if (h.size() > 0)
    {
-      // Skip adding this slice to our history list if nothing has changed
-      if (history.Identical(m_history_list.back())) return;
+      if (history.Identical(h.back())) return;
 
-      // If we have any previous history slices, we can generate
-      // a sort of diff'ed name for the slice, (otherwise it will
-      // just use the default history name "Initial History")
-      history.CalculateName(m_history_list.back());
+      // If we have any previous history slices, we can generate a sort of diff'ed name for
+      // the slice, (otherwise it will just use the default history name "Initial History")
+      history.CalculateName(h.back());
+
+      // If this looks like anything we've seen before, no reason to clutter the list with a bunch of back-and-forth
+      h.erase(remove_if(h.begin(), h.end(), [&history](const IconHistory &me) { return me.Identical(history); }), h.end());
    }
 
-   // Add it to our history list
-   m_history_list.push_back(history);
+   h.push_back(history);
+   while (h.size() > MaxIconHistoryCount) h.erase(h.begin());
 
-   // Limit the history list length
-   while (m_history_list.size() > MaxIconHistoryCount)
-   {
-      m_history_list.erase(m_history_list.begin());
-   }
-
-   // Now that we're all finished with a polling cycle, write our
-   // new results out to disk.
    serialize();
 }
 
@@ -288,9 +279,6 @@ void DesktopSaver::RestoreHistory(const IconHistory history)
 
 void DesktopSaver::RestoreHistoryOnce(const IconHistory &history)
 {
-   // Much of the following is based on a codeguru.com article written
-   // by Jeroen-bart Engelen (who in turn used a lot of advice from others).
-
    // Find the desktop listview window
    HWND program_manager = FindWindow(NULL, (L"Program Manager"));                     if (program_manager == NULL) return;
    HWND desktop = FindWindowEx(program_manager, NULL, (L"SHELLDLL_DefView"), NULL);   if (desktop == NULL) return;
