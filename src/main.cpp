@@ -75,7 +75,7 @@ int WINAPI WinMain(HINSTANCE h_instance, HINSTANCE, PSTR cmdLine, int)
       return 0;
    }
 
-   ErrorTracker::Initialize(WSTRING(L"DesktopSaver-" << DESKTOPSAVER_VERSION << L"-crash-report.dmp"), true, true);
+   ErrorTracker::Initialize(wstring(L"DesktopSaver-") + DESKTOPSAVER_VERSION + L"-crash-report.dmp", true, true);
 
    if (cmdLine != 0 && cmdLine[0] != 0)
    {

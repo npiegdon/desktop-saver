@@ -67,7 +67,7 @@ wstring AskForNewProfileName(HINSTANCE hinst, HWND hwnd)
    if (ret == ProfileNameDialogCancelled) { return L""; }
 
    // Anything else returned ought to be a pointer to the new name
-   wstring name = WSTRING((wchar_t*)ret);
+   wstring name((wchar_t*)ret);
    delete[] (wchar_t*)ret;
 
    return name;

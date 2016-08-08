@@ -33,7 +33,7 @@ DesktopSaver::DesktopSaver(const wstring &app_name)
    if (SUCCEEDED(hr))
    {
       // Attempt to create the directory (in case it doesn't already exist
-      wstring path = WSTRING(sh_path << L"\\DesktopSaver\\");
+      wstring path = wstring(sh_path) + L"\\DesktopSaver\\";
       SHCreateDirectoryEx(0, path.c_str(), 0);
 
       m_history_filename_ANSI = path + m_history_filename_ANSI;
@@ -169,9 +169,6 @@ void DesktopSaver::NamedProfileAutostart(const std::wstring &name)
 
 IconHistory DesktopSaver::ReadDesktop()
 {
-   // Much of the following is based on a codeguru.com article written
-   // by Jeroen-bart Engelen (who in turn used a lot of advice from others).
-
    IconHistory snapshot;
 
    // Find the desktop listview window
@@ -180,7 +177,7 @@ IconHistory DesktopSaver::ReadDesktop()
    HWND listview = FindWindowEx(desktop, NULL, (L"SysListView32"), NULL);             if (listview == NULL) return snapshot;
 
    // Find out how many icons we have
-   unsigned long icon_count = static_cast<unsigned long>(SendMessage(listview, LVM_GETITEMCOUNT, 0, 0));
+   auto icon_count = ListView_GetItemCount(listview);
    if (icon_count == 0) return snapshot;
 
    // Get a handle to the root (explorer.exe) process for the next step
@@ -195,20 +192,13 @@ IconHistory DesktopSaver::ReadDesktop()
    void    *remote_item =                       VirtualAllocEx(explorer, NULL, sizeof(LVITEM),               MEM_COMMIT, PAGE_READWRITE);
    wchar_t *remote_text = static_cast<wchar_t*>(VirtualAllocEx(explorer, NULL, sizeof(wchar_t)*(MAX_PATH+1), MEM_COMMIT, PAGE_READWRITE));
 
-   // Grab each one of the icons from the desktop
-   for (unsigned long i = 0; i < icon_count; ++i)
+   for (int i = 0; i < icon_count; ++i)
    {
-      Icon icon;
-      LRESULT ret;
-
       // Get the icon's position
-      ret = SendMessage(listview, LVM_GETITEMPOSITION, i, reinterpret_cast<LPARAM>(remote_pos));
-      if (ret != TRUE) continue;
+      if (ListView_GetItemPosition(listview, i, remote_pos) != TRUE) continue;
 
       POINT local_pos;
       ReadProcessMemory(explorer, remote_pos, &local_pos, sizeof(POINT), NULL);
-      icon.x = local_pos.x;
-      icon.y = local_pos.y;
 
       // Get ready to grab the icon label
       LVITEM local_item;
@@ -220,19 +210,16 @@ IconHistory DesktopSaver::ReadDesktop()
       WriteProcessMemory(explorer, remote_item, &local_item, sizeof(LVITEM), NULL);
 
       // Grab the icon label
-      ret = SendMessage(listview, LVM_GETITEMTEXT, i, (LPARAM)remote_item);
-      if (ret < 0) continue;
+      if (SendMessage(listview, LVM_GETITEMTEXT, i, (LPARAM)remote_item) < 0) continue;
 
       // We can skip the step of reading back the 'item', because the 
       // only thing we care about is the newly-changed 'text' buffer.
       wchar_t local_text[MAX_PATH+1];
       ReadProcessMemory(explorer, remote_text, &local_text, sizeof(local_text), NULL);
 
-      icon.name = local_text;
-
       // Now that we've put together an entire icon record, dump it
       // into our brand new history slice
-      snapshot.AddIcon(icon);
+      snapshot.AddIcon(Icon{ local_text, local_pos.x, local_pos.y });
    }
 
    // Clean up our cross-process resources
@@ -310,7 +297,7 @@ void DesktopSaver::RestoreHistoryOnce(const IconHistory &history)
    HWND listview = FindWindowEx(desktop, NULL, (L"SysListView32"), NULL);             if (listview == NULL) return;
 
    // Find out how many icons we have
-   unsigned long icon_count = static_cast<unsigned long>(SendMessage(listview, LVM_GETITEMCOUNT, 0, 0));
+   auto icon_count = ListView_GetItemCount(listview);
    if (icon_count == 0) return;
 
    // Get a handle to the root (explorer.exe) process for the next step
@@ -324,7 +311,7 @@ void DesktopSaver::RestoreHistoryOnce(const IconHistory &history)
    void    *remote_item =                       VirtualAllocEx(explorer, NULL, sizeof(LVITEM),               MEM_COMMIT, PAGE_READWRITE);
    wchar_t *remote_text = static_cast<wchar_t*>(VirtualAllocEx(explorer, NULL, sizeof(wchar_t)*(MAX_PATH+1), MEM_COMMIT, PAGE_READWRITE));
 
-   for (unsigned long i = 0; i < icon_count; ++i)
+   for (int i = 0; i < icon_count; ++i)
    {
       // Get ready to grab the icon label
       LVITEM local_item;
@@ -350,7 +337,7 @@ void DesktopSaver::RestoreHistoryOnce(const IconHistory &history)
       for (const auto &j : icons)
       {
          // If the saved and current names match, move the icon
-         if (j.name == icon_name) SendMessage(listview, LVM_SETITEMPOSITION, i, MAKELPARAM(j.x, j.y));
+         if (j.name == icon_name) ListView_SetItemPosition(listview, i, j.x, j.y);
       }
    }
 

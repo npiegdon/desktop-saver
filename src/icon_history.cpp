@@ -131,17 +131,17 @@ void IconHistory::CalculateName(const IconHistory &previous_history)
    // specific one-icon messages pre-empt
    wstring extra = L"";
    wstring extra_with_parens = L"";
-   if (iconsAdd > 0) extra = WSTRING(iconsAdd << L" Added");
-   if (iconsDel > 0) extra = WSTRING(iconsDel << L" Deleted");
-   if (iconsAdd > 0 && iconsDel > 0) extra = WSTRING(iconsAdd << L" Added, " << iconsDel << L" Deleted");
+   if (iconsAdd > 0) extra = to_wstring(iconsAdd) + L" Added";
+   if (iconsDel > 0) extra = to_wstring(iconsDel) + L" Deleted";
+   if (iconsAdd > 0 && iconsDel > 0) extra = to_wstring(iconsAdd) + L" Added, " + to_wstring(iconsDel) + L" Deleted";
    if (extra.length() > 0) extra_with_parens = L" (" + extra + L")";
 
-   if (iconsMov > 0) m_name = WSTRING(iconsMov << L" Moved" << extra_with_parens);
-   if (iconsMov == 1) m_name = WSTRING(L"'" << movName << L"' Moved" << extra_with_parens);
+   if (iconsMov > 0) m_name = to_wstring(iconsMov) + L" Moved" + extra_with_parens;
+   if (iconsMov == 1) m_name = L"'" + movName + L"' Moved" + extra_with_parens;
 
    if (iconsMov == 0) m_name = extra;
-   if (iconsMov == 0 && iconsAdd == 1 && iconsDel == 0) m_name = WSTRING(L"'" << addName << L"' Added");
-   if (iconsMov == 0 && iconsAdd == 0 && iconsDel == 1) m_name = WSTRING(L"'" << delName << L"' Deleted");
+   if (iconsMov == 0 && iconsAdd == 1 && iconsDel == 0) m_name = L"'" + addName + L"' Added";
+   if (iconsMov == 0 && iconsAdd == 0 && iconsDel == 1) m_name = L"'" + delName + L"' Deleted";
 }
 
 bool IconHistory::Identical(const IconHistory &other) const
