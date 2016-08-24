@@ -168,24 +168,44 @@ void DesktopSaver::NamedProfileAutostart(const std::wstring &name)
    else r.Write(L"profile_autostart", name);
 }
 
+static BOOL CALLBACK WorkerWithShellDefView(HWND child, LPARAM lparam)
+{
+   wchar_t name[64];
+   GetClassName(child, name, 64);
+   if (wcscmp(name, L"WorkerW") != 0) return TRUE;
+
+   HWND defView = FindWindowEx(child, NULL, L"SHELLDLL_DefView", NULL);
+   if (defView == NULL) return TRUE;
+
+   *reinterpret_cast<HWND*>(lparam) = defView;
+   return FALSE;
+}
+
 IconHistory DesktopSaver::ReadDesktop()
 {
    IconHistory snapshot;
 
-   // Find the desktop listview window
-   HWND program_manager = FindWindow(NULL, (L"Program Manager"));                     if (program_manager == NULL) return snapshot;
-   HWND desktop = FindWindowEx(program_manager, NULL, (L"SHELLDLL_DefView"), NULL);   if (desktop == NULL) return snapshot;
-   HWND listview = FindWindowEx(desktop, NULL, (L"SysListView32"), NULL);             if (listview == NULL) return snapshot;
+   HWND desktop = GetShellWindow();
+   if (desktop == NULL) return snapshot;
+
+   HWND desktopInner = FindWindowEx(desktop, NULL, L"SHELLDLL_DefView", NULL);
+
+   // From http://stackoverflow.com/a/9352551
+   // If a live wallpaper is used, the desktop is found under a WorkerW (with a SHELLDLL_DefView child) instead of Progman
+   if (desktopInner == NULL) EnumWindows(WorkerWithShellDefView, reinterpret_cast<LPARAM>(&desktopInner));
+   if (desktopInner == NULL) return snapshot;
+
+   HWND listview = FindWindowEx(desktopInner, NULL, L"SysListView32", NULL);
+   if (listview == NULL) return snapshot;
 
    // Find out how many icons we have
    auto icon_count = ListView_GetItemCount(listview);
    if (icon_count == 0) return snapshot;
 
-   // Get a handle to the root (explorer.exe) process for the next step
    DWORD explorer_id;
    GetWindowThreadProcessId(listview, &explorer_id);
 
-   HANDLE explorer = OpenProcess(PROCESS_VM_OPERATION|PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_QUERY_INFORMATION, FALSE, explorer_id);
+   HANDLE explorer = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, FALSE, explorer_id);
    if (explorer == NULL) return snapshot;
 
    // Allocate some shared memory for message passing
