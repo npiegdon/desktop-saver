@@ -168,86 +168,118 @@ void DesktopSaver::NamedProfileAutostart(const std::wstring &name)
    else r.Write(L"profile_autostart", name);
 }
 
-static BOOL CALLBACK WorkerWithShellDefView(HWND child, LPARAM lparam)
+class Desktop
 {
-   wchar_t name[64];
-   GetClassName(child, name, 64);
-   if (wcscmp(name, L"WorkerW") != 0) return TRUE;
+public:
+   Desktop() : listView(NULL), iconCount(0), explorer(NULL), remoteData(nullptr), remoteText(nullptr)
+   {
+      const HWND desktop = GetShellWindow();
+      if (desktop == NULL) return;
 
-   HWND defView = FindWindowEx(child, NULL, L"SHELLDLL_DefView", NULL);
-   if (defView == NULL) return TRUE;
+      HWND desktopInner = FindWindowEx(desktop, NULL, L"SHELLDLL_DefView", NULL);
 
-   *reinterpret_cast<HWND*>(lparam) = defView;
-   return FALSE;
-}
+      // From http://stackoverflow.com/a/9352551
+      // If a live wallpaper is used, the desktop is found under a WorkerW (with a SHELLDLL_DefView child) instead of Progman
+      if (desktopInner == NULL) EnumWindows(WorkerWithShellDefView, reinterpret_cast<LPARAM>(&desktopInner));
+      if (desktopInner == NULL) return;
+
+      listView = FindWindowEx(desktopInner, NULL, L"SysListView32", NULL);
+      if (listView == NULL) return;
+
+      iconCount = ListView_GetItemCount(listView);
+
+      DWORD explorer_id;
+      GetWindowThreadProcessId(listView, &explorer_id);
+
+      explorer = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, FALSE, explorer_id);
+      if (explorer == NULL) return;
+
+      // Allocate some shared memory for message passing
+      remoteData = VirtualAllocEx(explorer, NULL, max(sizeof(LVITEM), sizeof(POINT)), MEM_COMMIT, PAGE_READWRITE);
+      remoteText = static_cast<wchar_t*>(VirtualAllocEx(explorer, NULL, sizeof(wchar_t)*(MAX_PATH + 1), MEM_COMMIT, PAGE_READWRITE));
+   }
+
+   ~Desktop()
+   {
+      if (remoteData) VirtualFreeEx(explorer, remoteData, 0, MEM_RELEASE);
+      if (remoteText) VirtualFreeEx(explorer, remoteText, 0, MEM_RELEASE);
+      if (explorer) CloseHandle(explorer);
+   }
+
+   bool Valid() const { return listView != NULL && explorer != NULL && remoteData != nullptr && remoteText != nullptr; }
+
+   int IconCount() const { return iconCount; }
+
+   POINT IconPosition(int i) const
+   {
+      if (i >= iconCount) return POINT{ 0, 0 };
+      if (ListView_GetItemPosition(listView, i, remoteData) != TRUE) return POINT{ 0, 0 };
+
+      POINT p;
+      ReadProcessMemory(explorer, remoteData, &p, sizeof(POINT), NULL);
+      return p;
+   }
+
+   void IconPosition(int i, long x, long y)
+   {
+      if (i >= iconCount) return;
+      ListView_SetItemPosition(listView, i, x, y);
+   }
+
+   wstring IconText(int i) const
+   {
+      if (i >= iconCount) return wstring();
+
+      // Win32 has you send a structure to be filled out by the GetItemText message
+      LVITEM item;
+      item.iSubItem = 0;
+      item.cchTextMax = MAX_PATH;
+      item.mask = LVIF_TEXT;
+      item.pszText = (LPTSTR)remoteText;
+
+      WriteProcessMemory(explorer, remoteData, &item, sizeof(LVITEM), NULL);
+      if (SendMessage(listView, LVM_GETITEMTEXT, i, (LPARAM)remoteData) < 0) return wstring();
+
+      // We only care about the text
+      wchar_t text[MAX_PATH + 1];
+      ReadProcessMemory(explorer, remoteText, &text, sizeof(text), NULL);
+      return text;
+   }
+
+private:
+
+   static BOOL CALLBACK WorkerWithShellDefView(HWND child, LPARAM lparam)
+   {
+      wchar_t name[64];
+      GetClassName(child, name, 64);
+      if (wcscmp(name, L"WorkerW") != 0) return TRUE;
+
+      HWND defView = FindWindowEx(child, NULL, L"SHELLDLL_DefView", NULL);
+      if (defView == NULL) return TRUE;
+
+      *reinterpret_cast<HWND*>(lparam) = defView;
+      return FALSE;
+   }
+
+   HWND listView;
+   int iconCount;
+   HANDLE explorer;
+
+   void *remoteData;
+   wchar_t *remoteText;
+};
 
 IconHistory DesktopSaver::ReadDesktop()
 {
+   Desktop d;
+   if (!d.Valid()) return IconHistory();
+
    IconHistory snapshot;
-
-   HWND desktop = GetShellWindow();
-   if (desktop == NULL) return snapshot;
-
-   HWND desktopInner = FindWindowEx(desktop, NULL, L"SHELLDLL_DefView", NULL);
-
-   // From http://stackoverflow.com/a/9352551
-   // If a live wallpaper is used, the desktop is found under a WorkerW (with a SHELLDLL_DefView child) instead of Progman
-   if (desktopInner == NULL) EnumWindows(WorkerWithShellDefView, reinterpret_cast<LPARAM>(&desktopInner));
-   if (desktopInner == NULL) return snapshot;
-
-   HWND listview = FindWindowEx(desktopInner, NULL, L"SysListView32", NULL);
-   if (listview == NULL) return snapshot;
-
-   // Find out how many icons we have
-   auto icon_count = ListView_GetItemCount(listview);
-   if (icon_count == 0) return snapshot;
-
-   DWORD explorer_id;
-   GetWindowThreadProcessId(listview, &explorer_id);
-
-   HANDLE explorer = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, FALSE, explorer_id);
-   if (explorer == NULL) return snapshot;
-
-   // Allocate some shared memory for message passing
-   void    *remote_pos  =                       VirtualAllocEx(explorer, NULL, sizeof(POINT),                MEM_COMMIT, PAGE_READWRITE);
-   void    *remote_item =                       VirtualAllocEx(explorer, NULL, sizeof(LVITEM),               MEM_COMMIT, PAGE_READWRITE);
-   wchar_t *remote_text = static_cast<wchar_t*>(VirtualAllocEx(explorer, NULL, sizeof(wchar_t)*(MAX_PATH+1), MEM_COMMIT, PAGE_READWRITE));
-
-   for (int i = 0; i < icon_count; ++i)
+   for (int i = 0; i < d.IconCount(); ++i)
    {
-      // Get the icon's position
-      if (ListView_GetItemPosition(listview, i, remote_pos) != TRUE) continue;
-
-      POINT local_pos;
-      ReadProcessMemory(explorer, remote_pos, &local_pos, sizeof(POINT), NULL);
-
-      // Get ready to grab the icon label
-      LVITEM local_item;
-      local_item.iSubItem = 0;
-      local_item.cchTextMax = MAX_PATH;
-      local_item.mask = LVIF_TEXT;
-      local_item.pszText = (LPTSTR)remote_text;
-
-      WriteProcessMemory(explorer, remote_item, &local_item, sizeof(LVITEM), NULL);
-
-      // Grab the icon label
-      if (SendMessage(listview, LVM_GETITEMTEXT, i, (LPARAM)remote_item) < 0) continue;
-
-      // We can skip the step of reading back the 'item', because the 
-      // only thing we care about is the newly-changed 'text' buffer.
-      wchar_t local_text[MAX_PATH+1];
-      ReadProcessMemory(explorer, remote_text, &local_text, sizeof(local_text), NULL);
-
-      // Now that we've put together an entire icon record, dump it
-      // into our brand new history slice
-      snapshot.AddIcon(Icon{ local_text, local_pos.x, local_pos.y });
+      const POINT pos = d.IconPosition(i);
+      snapshot.AddIcon(Icon{ d.IconText(i), pos.x, pos.y });
    }
-
-   // Clean up our cross-process resources
-   VirtualFreeEx(explorer, remote_pos,  0, MEM_RELEASE);
-   VirtualFreeEx(explorer, remote_item, 0, MEM_RELEASE);
-   VirtualFreeEx(explorer, remote_text, 0, MEM_RELEASE);
-   CloseHandle(explorer);
 
    return snapshot;
 }
@@ -299,60 +331,15 @@ void DesktopSaver::RestoreHistory(const IconHistory history)
 
 void DesktopSaver::RestoreHistoryOnce(const IconHistory &history)
 {
-   // Find the desktop listview window
-   HWND program_manager = FindWindow(NULL, (L"Program Manager"));                     if (program_manager == NULL) return;
-   HWND desktop = FindWindowEx(program_manager, NULL, (L"SHELLDLL_DefView"), NULL);   if (desktop == NULL) return;
-   HWND listview = FindWindowEx(desktop, NULL, (L"SysListView32"), NULL);             if (listview == NULL) return;
+   Desktop d;
+   if (!d.Valid()) return;
 
-   // Find out how many icons we have
-   auto icon_count = ListView_GetItemCount(listview);
-   if (icon_count == 0) return;
-
-   // Get a handle to the root (explorer.exe) process for the next step
-   DWORD explorer_id;
-   GetWindowThreadProcessId(listview, &explorer_id);
-
-   HANDLE explorer = OpenProcess(PROCESS_VM_OPERATION|PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_QUERY_INFORMATION, FALSE, explorer_id);
-   if (explorer == NULL) return;
-
-   // Allocate some shared memory for message passing
-   void    *remote_item =                       VirtualAllocEx(explorer, NULL, sizeof(LVITEM),               MEM_COMMIT, PAGE_READWRITE);
-   wchar_t *remote_text = static_cast<wchar_t*>(VirtualAllocEx(explorer, NULL, sizeof(wchar_t)*(MAX_PATH+1), MEM_COMMIT, PAGE_READWRITE));
-
-   for (int i = 0; i < icon_count; ++i)
+   const auto icons = history.GetIcons();
+   for (int i = 0; i < d.IconCount(); ++i)
    {
-      // Get ready to grab the icon label
-      LVITEM local_item;
-      local_item.iSubItem = 0;
-      local_item.cchTextMax = MAX_PATH;
-      local_item.mask = LVIF_TEXT;
-      local_item.pszText = (LPTSTR)remote_text;
-
-      WriteProcessMemory(explorer, remote_item, &local_item, sizeof(LVITEM), NULL);
-
-      // Grab the icon label
-      LRESULT ret = SendMessage(listview, LVM_GETITEMTEXT, i, (LPARAM)remote_item);
-      if (ret < 0) continue;
-
-      // We can skip the step of reading back the 'item', because the 
-      // only thing we care about is the newly-changed 'text' buffer.
-      wchar_t icon_name_buf[MAX_PATH+1];
-      ReadProcessMemory(explorer, remote_text, &icon_name_buf, sizeof(icon_name_buf), NULL);
-      const wstring icon_name(icon_name_buf);
-
-      // Run through the saved list of icons
-      const set<Icon> icons = history.GetIcons();
-      for (const auto &j : icons)
-      {
-         // If the saved and current names match, move the icon
-         if (j.name == icon_name) ListView_SetItemPosition(listview, i, j.x, j.y);
-      }
+      const wstring name = d.IconText(i);
+      for (const auto &j : icons) if (j.name == name) d.IconPosition(i, j.x, j.y);
    }
-
-   // Clean up our cross-process resources
-   VirtualFreeEx(explorer, remote_item, 0, MEM_RELEASE);
-   VirtualFreeEx(explorer, remote_text, 0, MEM_RELEASE);
-   CloseHandle(explorer);
 }
 
 void DesktopSaver::ClearHistory()

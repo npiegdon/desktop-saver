@@ -27,4 +27,7 @@
   <ItemGroup>
     <ResourceCompile Include="src\saver.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="nsis_installer_script.nsi" />
+  </ItemGroup>
 </Project>

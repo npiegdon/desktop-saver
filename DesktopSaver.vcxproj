@@ -178,6 +178,9 @@
   <ItemGroup>
     <ResourceCompile Include="src\saver.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="nsis_installer_script.nsi" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
