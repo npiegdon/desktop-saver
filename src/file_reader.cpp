@@ -1,8 +1,6 @@
 // DesktopSaver, (c)2006-2016 Nicholas Piegdon, MIT licensed
 
 #include "file_reader.h"
-
-#include <fstream>
 #include <set>
 
 using namespace std;
@@ -31,15 +29,13 @@ FileReader::FileReader(const wstring &filename)
 
 const wstring FileReader::ReadLine()
 {
-   if (!stream) return L"";
+   if (!stream) return wstring();
 
    bool keepGoing;
    wstring line;
-
    do
    {
-      if (!stream->good()) return L"";
-
+      if (!stream->good()) return wstring();
       getline(*stream, line);
 
       keepGoing = false;
@@ -47,11 +43,9 @@ const wstring FileReader::ReadLine()
       // Strip comments out of the line
       for (size_t i = 0; i < line.length(); ++i)
       {
-         if (line[i] == comment_char)
-         {
-            line = line.substr(0, i);
-            break;
-         }
+         if (line[i] != comment_char) continue;
+         line = line.substr(0, i);
+         break;
       }
 
       // If the now-comment-stripped line is empty, just
@@ -65,17 +59,8 @@ const wstring FileReader::ReadLine()
       {
          bool foundNonWhitespace = false;
 
-         std::set<wchar_t> whitespace;
-         whitespace.insert(L' ');
-         whitespace.insert(L'\n');
-         whitespace.insert(L'\r');
-         whitespace.insert(L'\t');
-         
-         for (int i = 0; i < (int)line.length(); ++i)
-         {
-            wchar_t character = line[i];
-            if (whitespace.find(character) == whitespace.end()) foundNonWhitespace = true;
-         }
+         static const set<wchar_t> whitespace{ L' ', L'\n', L'\r', L'\t' };
+         for (wchar_t c : line) if (whitespace.find(c) == whitespace.end()) { foundNonWhitespace = true; break; }
 
          // If after searching the whole line, we didn't find any
          // regular characters at all, this is a whitespace line
@@ -84,11 +69,7 @@ const wstring FileReader::ReadLine()
 
    } while (keepGoing);
 
-   while (line.length() > 1 && line[line.length() - 1] == 13)
-   {
-      line = line.substr(0, line.length() - 1);
-   }
+   while (line.length() > 1 && line[line.length() - 1] == 13) line = line.substr(0, line.length() - 1);
 
    return line;
 }
-

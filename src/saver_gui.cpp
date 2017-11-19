@@ -40,13 +40,12 @@ static const int WM_Lookup_End =             WM_Tray_Profile_Autostart + 1;
 
 static const LRESULT RET_DEF_PROC = -35;
 
-// Sort of like a Singleton
-map<HWND, DesktopSaverGui*> DesktopSaverGui::gui_lookup;
+DesktopSaverGui *DesktopSaverGui::c_gui;
 
 DesktopSaverGui::DesktopSaverGui(HINSTANCE hinst)
 {
-   m_app_name = L"DesktopSaver";
-   m_class_name = L"desktop_saver";
+   const wstring qualifiedName = wstring(DesktopSaverName) + L" "s + wstring(DesktopSaverVersion);
+
    m_hinstance = hinst;
 
    // Win32 Stuff
@@ -60,23 +59,13 @@ DesktopSaverGui::DesktopSaverGui(HINSTANCE hinst)
    wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
    wndclass.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
    wndclass.lpszMenuName = NULL;
-   wndclass.lpszClassName = m_class_name.c_str();
+   wndclass.lpszClassName = DesktopSaverName;
 
-   if (!RegisterClass(&wndclass))
-   {
-      INTERNAL_ERROR(L"Couldn't register the " << m_class_name << L" window!");
-      exit(1);
-   }
+   if (!RegisterClass(&wndclass)) { INTERNAL_ERROR(L"Couldn't register the window!"); exit(1); }
 
-   gui_lookup[0] = this;
-   m_hwnd = CreateWindow(m_class_name.c_str(), WSTRING(m_app_name << L" " << DESKTOPSAVER_VERSION).c_str(),
-      WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 350, 200, NULL, NULL, hinst, this);
-
-   if (!m_hwnd)
-   {
-      INTERNAL_ERROR(L"Couldn't create main program window!");
-      exit(1);
-   }
+   c_gui = this;
+   m_hwnd = CreateWindow(DesktopSaverName, qualifiedName.c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 350, 200, NULL, NULL, hinst, this);
+   if (!m_hwnd) { INTERNAL_ERROR(L"Couldn't create main program window!"); exit(1); }
 
    // Leave the (default, completely empty, useless) window hidden
    ShowWindow(m_hwnd, SW_HIDE);
@@ -84,9 +73,9 @@ DesktopSaverGui::DesktopSaverGui(HINSTANCE hinst)
 
    // Create the system tray icon
    m_tray_icon = make_unique<TrayIcon>(m_hwnd, WM_TRAYMESSAGE, LoadIcon(hinst, L"IDI_TRAY_ICON"));
-   m_tray_icon->SetTooltip(WSTRING(m_app_name << L" " << DESKTOPSAVER_VERSION));
+   m_tray_icon->SetTooltip(qualifiedName.c_str());
 
-   m_saver = make_unique<DesktopSaver>(m_app_name);
+   m_saver = make_unique<DesktopSaver>();
 
    // Create our desktop icon polling timer
    m_timer_id = 1;
@@ -111,33 +100,18 @@ int DesktopSaverGui::Run()
 
 LRESULT CALLBACK DesktopSaverGui::proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
-   if (gui_lookup[hwnd] == 0)
-   {
-      gui_lookup[hwnd] = gui_lookup[0];
-      gui_lookup[0] = 0;
-   }
-
-   DesktopSaverGui *gui = gui_lookup[hwnd];
-   if (!gui)
-   {
-      INTERNAL_ERROR(L"ERROR: Win32 message received before global Icon Saver instance created!");
-      exit(1);
-   }
-
    switch (message)
    {
    case WM_ENDSESSION:  // fall-through
-   case WM_DESTROY:     { return gui->message_destroy(); }
-   case WM_CREATE:      { return gui->message_create(hwnd); }
-   case WM_TRAYMESSAGE: { return gui->message_tray(wparam, lparam); }
-   case WM_COMMAND:     { return gui->message_menu(wparam); }
-   case WM_TIMER:       { return gui->message_timer(wparam); return 0; }
+   case WM_DESTROY:     { return c_gui->message_destroy(); }
+   case WM_CREATE:      { return c_gui->message_create(hwnd); }
+   case WM_TRAYMESSAGE: { return c_gui->message_tray(wparam, lparam); }
+   case WM_COMMAND:     { return c_gui->message_menu(wparam); }
+   case WM_TIMER:       { return c_gui->message_timer(wparam); return 0; }
    default:
    {
-      LRESULT ret = gui->message_default(message, wparam, lparam);
-
-      if (ret == RET_DEF_PROC) break;
-      else return ret;
+      LRESULT ret = c_gui->message_default(message, wparam, lparam);
+      if (ret != RET_DEF_PROC) return ret;
    }
    }
    return DefWindowProc(hwnd, message, wparam, lparam);
@@ -261,14 +235,12 @@ HMENU DesktopSaverGui::build_dynamic_menu()
    // Build up each "Update Profile" menu item
    HMENU profile_update = CreatePopupMenu();
    int update_choice = 0;
-   for (HistoryRevIter i = named_profiles.rbegin(); i != named_profiles.rend(); ++i)
-      AppendMenu(profile_update, MF_STRING, WM_Tray_Profile_Update + update_choice++, i->GetName().c_str());
+   for (HistoryRevIter i = named_profiles.rbegin(); i != named_profiles.rend(); ++i) AppendMenu(profile_update, MF_STRING, WM_Tray_Profile_Update + update_choice++, i->GetName().c_str());
 
    // Build up each "Delete Profile" menu item
    HMENU profile_delete = CreatePopupMenu();
    int delete_choice = 0;
-   for (HistoryRevIter i = named_profiles.rbegin(); i != named_profiles.rend(); ++i)
-      AppendMenu(profile_delete, MF_STRING, WM_Tray_Profile_Delete + delete_choice++, i->GetName().c_str());
+   for (HistoryRevIter i = named_profiles.rbegin(); i != named_profiles.rend(); ++i) AppendMenu(profile_delete, MF_STRING, WM_Tray_Profile_Delete + delete_choice++, i->GetName().c_str());
 
    // Build up each "Autostart Profile" menu item
    std::wstring autostart_profilename = m_saver->GetAutostartProfileName();
@@ -292,8 +264,7 @@ HMENU DesktopSaverGui::build_dynamic_menu()
    {
       // Build up each history menu item
       int history_choice = 0;
-      for (HistoryRevIter i = history.rbegin(); i != history.rend(); ++i)
-         AppendMenu(menu, MF_STRING, WM_Tray_History + history_choice++, i->GetName().c_str());
+      for (HistoryRevIter i = history.rbegin(); i != history.rend(); ++i) AppendMenu(menu, MF_STRING, WM_Tray_History + history_choice++, i->GetName().c_str());
 
       // Decide whether to gray-out the "Clear History" option, if we don't
       // have any history slices to clear
@@ -306,15 +277,13 @@ HMENU DesktopSaverGui::build_dynamic_menu()
 
    // Add each named profile to this list
    int named_choice = 0;
-   for (HistoryRevIter i = named_profiles.rbegin(); i != named_profiles.rend(); ++i)
-      AppendMenu(menu, MF_STRING, WM_Tray_Named_Profile + named_choice++, i->GetName().c_str());
+   for (HistoryRevIter i = named_profiles.rbegin(); i != named_profiles.rend(); ++i) AppendMenu(menu, MF_STRING, WM_Tray_Named_Profile + named_choice++, i->GetName().c_str());
 
 
    // If we've reached our maximum number of user-created
    // named profiles, disable the "Create" command
    bool too_many_profiles = false;
-   if (m_saver->NamedProfiles().size() >= DesktopSaver::MaxProfileCount)
-      too_many_profiles = true;
+   if (m_saver->NamedProfiles().size() >= DesktopSaver::MaxProfileCount) too_many_profiles = true;
 
    bool have_profiles = (named_profiles.size() > 0);
    AppendMenu(menu, MF_STRING | (too_many_profiles?MF_GRAYED:0), WM_Tray_Profile_Create, L"&Create new named profile...");
@@ -399,8 +368,7 @@ LRESULT DesktopSaverGui::message_menu(WPARAM choice)
       {
          PollRate current = m_saver->GetPollRate();
 
-         if (current != DisableHistory
-            && ASK_QUESTION(L"Disabling your history will erase all history snapshots.  Continue?\n(Your named profiles will remain intact)."))
+         if (current != DisableHistory && ASK_QUESTION(L"Disabling your history will erase all history snapshots.  Continue?\n(Your named profiles will remain intact)."))
          {
             // We must set the poll rate before clearing the history
             // otherwise a poll will occur *just* after the clear

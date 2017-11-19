@@ -16,18 +16,12 @@ typedef HistoryList::iterator MalleableHistoryIter;
 typedef HistoryList::const_iterator HistoryIter;
 typedef HistoryList::const_reverse_iterator HistoryRevIter;
 
-enum PollRate
-{
-   DisableHistory, PollEndpoints,
-   Interval1, Interval2, Interval3, Interval4
-};
-const static PollRate DefaultPollRate = Interval2;
-
+enum PollRate { DisableHistory, PollEndpoints, Interval1, Interval2, Interval3, Interval4, PollRate_Max };
 
 class DesktopSaver
 {
 public:
-   DesktopSaver(const std::wstring &app_name);
+   DesktopSaver();
 
    static const size_t MaxProfileCount = 10;
    static const size_t MaxIconHistoryCount = 25;
@@ -50,8 +44,8 @@ public:
 
    std::wstring GetAutostartProfileName() const;
 
-   const HistoryList &History() const { return m_history_list; }
-   const HistoryList &NamedProfiles() const { return m_named_profile_list; }
+   const HistoryList &History() const { return m_history; }
+   const HistoryList &NamedProfiles() const { return m_namedProfiles; }
    void ClearHistory();
 
 private:
@@ -71,11 +65,6 @@ private:
    // lightweight as possible
    PollRate m_rate;
 
-   std::wstring m_app_name;
-
-   std::wstring m_history_filename_ANSI;
-   std::wstring m_history_filename_UNICODE;
-
-   HistoryList m_history_list;
-   HistoryList m_named_profile_list;
+   std::wstring m_historyPath;
+   HistoryList m_history, m_namedProfiles;
 };

@@ -1,4 +1,4 @@
-// DesktopSaver, (c)2006-2016 Nicholas Piegdon, MIT licensed
+// DesktopSaver, (c)2006-2017 Nicholas Piegdon, MIT licensed
 #pragma once
 
 #include <windows.h>
@@ -19,14 +19,5 @@ public:
    void SetTooltip(const std::wstring &tooltip);
 
 private:
-
-   NOTIFYICONDATA build_icon_data();
-
-   int m_id;
-   HWND m_hwnd;
-   UINT m_callback_id;
-   HICON m_icon;
-   std::wstring m_tooltip;
-
-   static int m_icon_id_counter;
+   NOTIFYICONDATA m_icon;
 };

@@ -50,16 +50,13 @@ wstring GetCommandLineArguments()
 
 int AutoLoadProfile(wstring profileName)
 {
-   DesktopSaver saver(L"DesktopSaver");
-
-   const HistoryList &profiles = saver.NamedProfiles();
-   for (HistoryIter h = profiles.begin(); h != profiles.end(); ++h)
+   DesktopSaver saver;
+   for (auto &p : saver.NamedProfiles())
    {
-      if (h->GetName() == profileName)
-      {
-         saver.RestoreHistory(*h);
-         return 0;
-      }
+      if (p.GetName() != profileName) continue;
+
+      saver.RestoreHistory(p);
+      return 0;
    }
 
    return 1;
@@ -75,7 +72,7 @@ int WINAPI WinMain(HINSTANCE h_instance, HINSTANCE, PSTR cmdLine, int)
       return 0;
    }
 
-   ErrorTracker::Initialize(wstring(L"DesktopSaver-") + DESKTOPSAVER_VERSION + L"-crash-report.dmp", true, true);
+   ErrorTracker::Initialize(wstring(L"DesktopSaver-") + wstring(DesktopSaverVersion) + wstring(L"-crash-report.dmp"), true, true);
 
    if (cmdLine != 0 && cmdLine[0] != 0)
    {

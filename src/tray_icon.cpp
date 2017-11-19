@@ -1,66 +1,26 @@
-// DesktopSaver, (c)2006-2016 Nicholas Piegdon, MIT licensed
+// DesktopSaver, (c)2006-2017 Nicholas Piegdon, MIT licensed
 
 #include <windows.h>
 #include "tray_icon.h"
 
-int TrayIcon::m_icon_id_counter = 0;
-
 TrayIcon::TrayIcon(HWND hwnd, UINT callback_id, HICON icon)
-: m_hwnd(hwnd), m_callback_id(callback_id), m_icon(icon)
 {
-   m_tooltip = L"";
-   m_id = m_icon_id_counter++;
+    m_icon.cbSize = sizeof(NOTIFYICONDATA);
+    m_icon.hWnd = hwnd;
+    m_icon.uID = 0;
+    m_icon.hIcon = icon;
+    m_icon.uCallbackMessage = callback_id;
+    m_icon.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+    m_icon.szTip[0] = 0;
 
-   // Now that we've set up the initial state of the object, we can
-   // use our typical creation function to make the initial icon
-   RestoreIcon();
+    RestoreIcon();
 }
 
-TrayIcon::~TrayIcon()
-{
-   NOTIFYICONDATA nid = build_icon_data();
-   bool ret = (Shell_NotifyIcon(NIM_DELETE, &nid) == TRUE);
-
-#ifdef _DEBUG
-   if (!ret) __debugbreak();
-#endif
-}
-
-void TrayIcon::RestoreIcon()
-{
-   NOTIFYICONDATA nid = build_icon_data();
-   bool ret = (Shell_NotifyIcon(NIM_ADD, &nid) == TRUE);
-
-#ifdef _DEBUG
-   if (!ret) __debugbreak();
-#endif
-}
+TrayIcon::~TrayIcon() { Shell_NotifyIcon(NIM_DELETE, &m_icon); }
+void TrayIcon::RestoreIcon() { Shell_NotifyIcon(NIM_ADD, &m_icon); }
 
 void TrayIcon::SetTooltip(const std::wstring &tooltip)
 {
-   // Just set the tooltip and "modify" the icon
-   m_tooltip = tooltip;
-
-   NOTIFYICONDATA nid = build_icon_data();
-   bool ret = (Shell_NotifyIcon(NIM_MODIFY, &nid) == TRUE);
-
-#ifdef _DEBUG
-   if (!ret) __debugbreak();
-#endif
-}
-
-NOTIFYICONDATA TrayIcon::build_icon_data()
-{
-   NOTIFYICONDATA nid;
-   nid.cbSize = sizeof(NOTIFYICONDATA);
-   nid.hWnd = m_hwnd;
-   nid.uID = m_id;
-   nid.hIcon = m_icon;
-   nid.uCallbackMessage = m_callback_id;
-   nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
-
-   // Copy the tooltip string into the structure
-   wcscpy_s(nid.szTip, 64, m_tooltip.c_str());
-
-   return nid;
+    wcscpy_s(m_icon.szTip, 64, tooltip.c_str());
+    Shell_NotifyIcon(NIM_MODIFY, &m_icon);
 }

@@ -14,13 +14,13 @@ const wstring IconHistory::named_identifier(L"named_profile");
 
 IconHistory::IconHistory() : m_named_profile(false), m_name(L"Initial History") { }
 
-bool IconHistory::Deserialize(FileReader *fr)
+bool IconHistory::Deserialize(FileReader &fr)
 {
    m_icons.clear();
    m_named_profile = false;
 
    // Read the header
-   wstring new_name = fr->ReadLine();
+   wstring new_name = fr.ReadLine();
    if (new_name.length() <= 0) return false;
 
    // If this is a named profile, the first
@@ -30,14 +30,14 @@ bool IconHistory::Deserialize(FileReader *fr)
    {
       m_named_profile = true;
 
-      new_name = fr->ReadLine();
+      new_name = fr.ReadLine();
       if (new_name.length() <= 0) return false;
    }
    m_name = new_name;
 
    // Parse the icon count using istringstreams
    int icon_count = 0;
-   wistringstream icon_count_stream(fr->ReadLine());
+   wistringstream icon_count_stream(fr.ReadLine());
    icon_count_stream >> icon_count;
 
    // Don't check for (icon_count > 0), because
@@ -48,9 +48,9 @@ bool IconHistory::Deserialize(FileReader *fr)
    {
       Icon icon;
 
-      icon.name = fr->ReadLine();
-      wistringstream x_stream(fr->ReadLine());
-      wistringstream y_stream(fr->ReadLine());
+      icon.name = fr.ReadLine();
+      wistringstream x_stream(fr.ReadLine());
+      wistringstream y_stream(fr.ReadLine());
 
       x_stream >> icon.x;
       y_stream >> icon.y;
@@ -176,21 +176,20 @@ bool IconHistory::Identical(const IconHistory &other) const
    return true;
 }
 
-wstring IconHistory::Serialize() const
+wostream &operator<<(wostream &os, const IconHistory &h)
 {
-   wostringstream os;
    os << L": =============================================" << endl;
-   os << L": IconHistory \"" << m_name << L"\"" << endl << endl;
+   os << L": IconHistory \"" << h.m_name << L"\"" << endl << endl;
 
-   if (IsNamedProfile()) { os << named_identifier << endl; }
+   if (h.IsNamedProfile()) { os << h.named_identifier << endl; }
 
-   os << m_name << endl;
-   os << (unsigned int)m_icons.size() << endl;
+   os << h.m_name << endl;
+   os << (unsigned int)h.m_icons.size() << endl;
    os << endl;
 
    // Write each icon
    int counter = 0;
-   for (const auto &i : m_icons)
+   for (const auto &i : h.m_icons)
    {
       os << i.name << endl;
       os << i.x << endl;
@@ -199,6 +198,5 @@ wstring IconHistory::Serialize() const
    }
 
    os << endl;
-   return os.str();
+   return os;
 }
-

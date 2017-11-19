@@ -1,8 +1,8 @@
-// DesktopSaver, (c)2006-2016 Nicholas Piegdon, MIT licensed
+// DesktopSaver, (c)2006-2017 Nicholas Piegdon, MIT licensed
 #pragma once
 
 #include <string>
-#include <windows.h>
+#include <Windows.h>
 
 // Registry simplifies reading/writing the Windows registry
 // (It currently does not support enumerating or deleting)
@@ -15,23 +15,29 @@ public:
    // not supplied, or [rootKey]/Software/[company]/[program] if it is supplied.
    //
    // In the event of CU_Run or LM_Run, both 'program' and 'company' are ignored.
-   Registry(const RootKey rootKey, const std::wstring program, const std::wstring company = L"");
+   Registry(const RootKey rootKey, const std::wstring &program, const std::wstring &company = L"");
    ~Registry();
 
    // If the key was found and read successfully, function will return true,
    // otherwise 'out' will be filled with defaultValue, and function will
    // return false. (Regardless of return value, 'out' will always be usable)
-   const bool Read(const std::wstring keyName, std::wstring *out, const std::wstring defaultValue) const;
-   const bool Read(const std::wstring keyName, bool *out, const bool defaultValue) const;
-   const bool Read(const std::wstring keyName, long *out, const long defaultValue) const;
-   const bool Read(const std::wstring keyName, int  *out, const int  defaultValue) const;
+   bool Read(const std::wstring &keyName, std::wstring *out, const std::wstring &defaultValue) const;
+   bool Read(const std::wstring &keyName, bool *out, bool defaultValue) const;
+   bool Read(const std::wstring &keyName, long *out, long defaultValue) const;
+   bool Read(const std::wstring &keyName, int  *out, int  defaultValue) const;
 
-   void Write(const std::wstring keyName, const std::wstring value);
-   void Write(const std::wstring keyName, const bool value);
-   void Write(const std::wstring keyName, const long value);
-   void Write(const std::wstring keyName, const int  value);
+   // Convenience functions when you don't care whether things went successfully
+   std::wstring Registry::Read(const std::wstring &keyName, const std::wstring &defaultValue) const { std::wstring result; Read(keyName, &result, defaultValue); return result; }
+   bool Registry::Read(const std::wstring &keyName, bool defaultValue) const { bool result; Read(keyName, &result, defaultValue); return result; }
+   long Registry::Read(const std::wstring &keyName, long defaultValue) const { long result; Read(keyName, &result, defaultValue); return result; }
+   int Registry::Read(const std::wstring &keyName, int defaultValue) const { int result; Read(keyName, &result, defaultValue); return result; }
 
-   void Delete(const std::wstring keyName);
+   void Write(const std::wstring &keyName, const std::wstring &value);
+   void Write(const std::wstring &keyName, bool value);
+   void Write(const std::wstring &keyName, long value);
+   void Write(const std::wstring &keyName, int  value);
+
+   void Delete(const std::wstring &keyName);
 
 private:
    bool good;

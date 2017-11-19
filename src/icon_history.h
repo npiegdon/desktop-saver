@@ -4,9 +4,7 @@
 #include <string>
 #include <set>
 
-// Forward Declarations
 class FileReader;
-class FileReaderNonUnicode;
 
 // Contains information about one icon that lives on the desktop.
 //
@@ -49,12 +47,9 @@ public:
 
    const std::set<Icon> GetIcons() const { return m_icons; }
 
-   // Restore icon history from file.  Returns
-   // true on success, false if the FileReader couldn't
-   // supply enough input (for the "last in the file" case)
-   bool Deserialize(FileReader *fr);
-
-   std::wstring Serialize() const;
+   // Restore icon history from file.  Returns true on success, false if the
+   // FileReader couldn't supply enough input (for the "last in the file" case)
+   bool Deserialize(FileReader &fr);
 
 private:
    std::set<Icon> m_icons;
@@ -63,4 +58,6 @@ private:
    std::wstring m_name;
 
    const static std::wstring named_identifier;
+
+   friend std::wostream &operator<<(std::wostream &os, const IconHistory &h);
 };

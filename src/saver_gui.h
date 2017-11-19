@@ -4,7 +4,6 @@
 #include <windows.h>
 #include <string>
 #include <memory>
-#include <map>
 
 class DesktopSaver;
 class TrayIcon;
@@ -19,8 +18,7 @@ public:
 
 private:
    std::unique_ptr<DesktopSaver> m_saver;
-
-   static std::map<HWND, DesktopSaverGui*> DesktopSaverGui::gui_lookup;
+   static DesktopSaverGui *c_gui;
    static LRESULT CALLBACK proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 
    LRESULT message_destroy();
@@ -36,8 +34,6 @@ private:
 
    HWND m_hwnd;
    HINSTANCE m_hinstance;
-   std::wstring m_app_name;
-   std::wstring m_class_name;
 
    UINT m_taskbar_restart_message;
    UINT_PTR m_timer_id;

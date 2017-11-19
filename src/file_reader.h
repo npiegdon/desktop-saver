@@ -3,7 +3,6 @@
 
 #include <string>
 #include <memory>
-#include <fstream>
 #include <sstream>
 
 // A simple file manipulation class to read the plain-text with colon (':')

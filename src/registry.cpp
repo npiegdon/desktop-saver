@@ -1,4 +1,4 @@
-// DesktopSaver, (c)2006-2016 Nicholas Piegdon, MIT licensed
+// DesktopSaver, (c)2006-2017 Nicholas Piegdon, MIT licensed
 
 #include "registry.h"
 #include <cassert>
@@ -6,7 +6,7 @@
 
 using namespace std;
 
-Registry::Registry(const RootKey rootKey, const wstring program, const wstring company)
+Registry::Registry(const RootKey rootKey, const wstring &program, const wstring &company)
 {
    good = true;
    key = NULL;
@@ -63,20 +63,20 @@ Registry::~Registry()
    RegCloseKey(key);
 }
 
-void Registry::Delete(const wstring keyName)
+void Registry::Delete(const wstring &keyName)
 {
    if (!good) return;
    RegDeleteValue(key, keyName.c_str());
 }
 
 
-void Registry::Write(const wstring keyName, const wstring value)
+void Registry::Write(const wstring &keyName, const wstring &value)
 {
    if (!good) return;
    RegSetValueEx(key, keyName.c_str(), 0, REG_SZ, (LPBYTE)value.c_str(), (DWORD)( (value.length()+1)*2 ));
 }
 
-void Registry::Write(const wstring keyName, const bool value)
+void Registry::Write(const wstring &keyName, bool value)
 {
    if (!good) return;
 
@@ -84,19 +84,19 @@ void Registry::Write(const wstring keyName, const bool value)
    RegSetValueEx(key, keyName.c_str(), 0, REG_DWORD, (LPBYTE)&val, sizeof(DWORD));
 }
 
-void Registry::Write(const wstring keyName, const long value)
+void Registry::Write(const wstring &keyName, long value)
 {
    if (!good) return;
    RegSetValueEx(key, keyName.c_str(), 0, REG_DWORD, (LPBYTE)&value, sizeof(DWORD));
 }
 
-void Registry::Write(const wstring keyName, const int value)
+void Registry::Write(const wstring &keyName, int value)
 {
    if (!good) return;
    RegSetValueEx(key, keyName.c_str(), 0, REG_DWORD, (LPBYTE)&value, sizeof(DWORD));
 }
 
-const bool Registry::Read(const wstring keyName, wstring *out, const wstring defaultValue) const
+bool Registry::Read(const wstring &keyName, wstring *out, const wstring &defaultValue) const
 {
    // Default the return value immediately
    *out = defaultValue;
@@ -121,7 +121,7 @@ const bool Registry::Read(const wstring keyName, wstring *out, const wstring def
    return (result == ERROR_SUCCESS);
 }
 
-const bool Registry::Read(const wstring keyName, bool *out, const bool defaultValue) const
+bool Registry::Read(const wstring &keyName, bool *out, bool defaultValue) const
 {
    // Default the return value immediately
    *out = defaultValue;
@@ -136,7 +136,7 @@ const bool Registry::Read(const wstring keyName, bool *out, const bool defaultVa
    return (result == ERROR_SUCCESS);
 }
 
-const bool Registry::Read(const wstring keyName, long *out, const long defaultValue) const
+bool Registry::Read(const wstring &keyName, long *out, long defaultValue) const
 {
    // Default the return value immediately
    *out = defaultValue;
@@ -151,7 +151,7 @@ const bool Registry::Read(const wstring keyName, long *out, const long defaultVa
    return (result == ERROR_SUCCESS);
 }
 
-const bool Registry::Read(const wstring keyName, int *out, const int defaultValue) const
+bool Registry::Read(const wstring &keyName, int *out, int defaultValue) const
 {
    // Default the return value immediately
    *out = defaultValue;
@@ -165,4 +165,3 @@ const bool Registry::Read(const wstring keyName, int *out, const int defaultValu
 
    return (result == ERROR_SUCCESS);
 }
-

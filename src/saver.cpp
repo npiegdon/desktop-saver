@@ -14,22 +14,17 @@
 #include <sstream>
 using namespace std;
 
-DesktopSaver::DesktopSaver(const wstring &app_name)
+DesktopSaver::DesktopSaver()
 {
-   m_app_name = app_name;
-
    // Grab our polling rate from the registry
    m_rate = read_poll_rate();
 
    // Set the location of the history file by starting with a default
-   m_history_filename_UNICODE = L"icon_history_2.txt";
+   m_historyPath = L"icon_history_2.txt";
 
    // Add the shell folder path if we've got one
    TCHAR sh_path[MAX_PATH];
-   HRESULT hr = SHGetFolderPath(0,
-      CSIDL_APPDATA | CSIDL_FLAG_CREATE,
-      0, SHGFP_TYPE_CURRENT,
-      sh_path);
+   HRESULT hr = SHGetFolderPath(0, CSIDL_APPDATA | CSIDL_FLAG_CREATE, 0, SHGFP_TYPE_CURRENT, sh_path);
 
    if (SUCCEEDED(hr))
    {
@@ -37,8 +32,7 @@ DesktopSaver::DesktopSaver(const wstring &app_name)
       wstring path = wstring(sh_path) + L"\\DesktopSaver\\";
       SHCreateDirectoryEx(0, path.c_str(), 0);
 
-      m_history_filename_ANSI = path + m_history_filename_ANSI;
-      m_history_filename_UNICODE = path + m_history_filename_UNICODE;
+      m_historyPath = path + m_historyPath;
    }
 
    // Load our previous icon history file
@@ -49,92 +43,82 @@ DesktopSaver::DesktopSaver(const wstring &app_name)
    // the last known positions of all the icons (on subsequent runs).
    PollDesktopIcons();
 
-   const std::wstring autostart = GetAutostartProfileName();
-   if (autostart.length() > 0)
+   const wstring autostart = GetAutostartProfileName();
+   if (autostart.empty()) return;
+
+   for (const auto &h : m_namedProfiles)
    {
-      for (HistoryIter h = m_named_profile_list.begin(); h != m_named_profile_list.end(); ++h)
-      {
-         if (h->GetName() != autostart) continue;
+      if (h.GetName() != autostart) continue;
 
-         RestoreHistory(*h);
-         break;
-      }   
-   }
-
+      RestoreHistory(h);
+      break;
+   }   
 }
 
 void DesktopSaver::deserialize()
 {
    // knock out our old history and named profile list
-   m_history_list = HistoryList();
-   m_named_profile_list = HistoryList();
+   m_history = HistoryList();
+   m_namedProfiles = HistoryList();
 
-    FileReader fr(m_history_filename_UNICODE);
+    FileReader fr(m_historyPath);
 
     // Read in IconHistory objects until one fails to load
     IconHistory h;
-    while (h.Deserialize(&fr))
+    while (h.Deserialize(fr))
     {
-        if (h.IsNamedProfile()) m_named_profile_list.push_back(h);
-        else m_history_list.push_back(h);
+        if (h.IsNamedProfile()) m_namedProfiles.push_back(h);
+        else m_history.push_back(h);
     }
 
 }
 
 void DesktopSaver::serialize() const
 {
-   // NOTE: The multi-byte output requires this
-   const static wstring end = L"\r\n";
+    // NOTE: The multi-byte output requires this
+    const static wstring end = L"\r\n";
 
-   wostringstream file;
+    wostringstream file;
+    file << L":" << end;
+    file << L": " << DesktopSaverName << L" " << DesktopSaverVersion << L" icon history file" << end;
+    file << L":" << end;
+    file << end;
+    for (const auto &h : m_history) file << h << end;
+    for (const auto &h : m_namedProfiles) file << h << end;
 
-   file << L":" << end;
-   file << L": " << m_app_name << L" " << DESKTOPSAVER_VERSION << L" icon history file" << end;
-   file << L":" << end;
-   file << end;
+    FILE *f = 0;
+    errno_t err = _wfopen_s(&f, m_historyPath.c_str(), L"wb");
 
-   for (HistoryIter i = m_history_list.begin(); i != m_history_list.end(); ++i)
-   { file << i->Serialize() << end; }
+    if (err != 0 || f == 0)
+    {
+        STANDARD_ERROR(L"Could not save icon position information to the file:" << endl << m_historyPath << endl << endl << L"Check that you have write access to that location and that the file isn't in use.");
+        exit(1);
+    }
 
-   for (HistoryIter i = m_named_profile_list.begin(); i != m_named_profile_list.end(); ++i)
-   { file << i->Serialize() << end; }
-
-   FILE *f = 0;
-   errno_t err = _wfopen_s(&f, m_history_filename_UNICODE.c_str(), L"wb");
-
-   if (err != 0 || f == 0)
-   {
-      STANDARD_ERROR(L"Could not save icon position information to the file:" << endl
-         << m_history_filename_UNICODE << endl << endl
-         << L"Check that you have write access to that location and that the file isn't in use.");
-
-      exit(1);
-   }
-
-   fputws(file.str().c_str(), f);
-   fclose(f);
+    fputws(file.str().c_str(), f);
+    fclose(f);
 }
 
-void DesktopSaver::NamedProfileAdd(const std::wstring &name)
+void DesktopSaver::NamedProfileAdd(const wstring &name)
 {
    IconHistory i = ReadDesktop();
    i.SetProfileName(name);
 
-   m_named_profile_list.push_back(i);
+   m_namedProfiles.push_back(i);
 
    // After changes, we should write our results out to disk.
    serialize();
 }
 
-void DesktopSaver::NamedProfileOverwrite(const std::wstring &name)
+void DesktopSaver::NamedProfileOverwrite(const wstring &name)
 {
    // Find the profile in question
    MalleableHistoryIter i;
-   for (i = m_named_profile_list.begin(); i != m_named_profile_list.end(); ++i)
+   for (i = m_namedProfiles.begin(); i != m_namedProfiles.end(); ++i)
    {
       if (i->GetName() == name) break;
    }
-   if (i == m_named_profile_list.end()) INTERNAL_ERROR(L"Couldn't find profile '" << name << L"' to overwrite.");
+   if (i == m_namedProfiles.end()) INTERNAL_ERROR(L"Couldn't find profile '" << name << L"' to overwrite.");
 
    *i = ReadDesktop();
    i->SetProfileName(name);
@@ -143,25 +127,25 @@ void DesktopSaver::NamedProfileOverwrite(const std::wstring &name)
    serialize();
 }
 
-void DesktopSaver::NamedProfileDelete(const std::wstring &name)
+void DesktopSaver::NamedProfileDelete(const wstring &name)
 {
    // Find the profile in question
    MalleableHistoryIter i;
-   for (i = m_named_profile_list.begin(); i != m_named_profile_list.end(); ++i)
+   for (i = m_namedProfiles.begin(); i != m_namedProfiles.end(); ++i)
    {
       if (i->GetName() == name) break;
    }
-   if (i == m_named_profile_list.end()) INTERNAL_ERROR(L"Couldn't find profile '" << name << "' to delete.");
+   if (i == m_namedProfiles.end()) INTERNAL_ERROR(L"Couldn't find profile '" << name << "' to delete.");
 
-   m_named_profile_list.erase(i);
+   m_namedProfiles.erase(i);
 
    // After changes, we should write our results out to disk.
    serialize();
 }
 
-void DesktopSaver::NamedProfileAutostart(const std::wstring &name)
+void DesktopSaver::NamedProfileAutostart(const wstring &name)
 {
-   Registry r(Registry::CurrentUser, m_app_name, L"");
+   Registry r(Registry::CurrentUser, L"DesktopSaver", L"");
 
    // Setting it to the same value is how you turn off auto-start
    if (GetAutostartProfileName() == name) r.Delete(L"profile_autostart");
@@ -286,7 +270,7 @@ IconHistory DesktopSaver::ReadDesktop()
 
 void DesktopSaver::PollDesktopIcons()
 {
-   auto &h = m_history_list;
+   auto &h = m_history;
    if (GetPollRate() == DisableHistory) { h.clear(); return; }
 
    IconHistory history = ReadDesktop();
@@ -344,7 +328,7 @@ void DesktopSaver::RestoreHistoryOnce(const IconHistory &history)
 
 void DesktopSaver::ClearHistory()
 {
-   m_history_list.clear();
+    m_history.clear();
 
    // As an added security measure, we should write
    // the history file out immediately to erase any
@@ -357,61 +341,33 @@ void DesktopSaver::ClearHistory()
 
 bool DesktopSaver::GetRunOnStartup() const
 {
-   Registry r(Registry::CU_Run, L"", L"");
+   Registry r(Registry::CU_Run, L"");
 
-   wstring result;
-
-   const wstring no_result = L"__no_result_found";
-   r.Read(m_app_name, &result, no_result);
-
-   return (result != no_result);
+   static const wstring Sentinel(L"__no_result_found");
+   return r.Read(L"DesktopSaver", Sentinel) != Sentinel;
 }
 
 void DesktopSaver::SetRunOnStartup(bool run)
 {
-   Registry r(Registry::CU_Run, L"", L"");
+   Registry r(Registry::CU_Run, L"");
+   if (!run) { r.Delete(L"DesktopSaver"); return; }
 
-   if (!run)
-   {
-      r.Delete(m_app_name);
-      return;
-   }
-   else
-   {
-      // Strip whitespace off the ends of the command-line string
-      // HKCU/.../Run won't run a command that has a trailing space
-      // after it.
-      wstring command(GetCommandLine());
-      while (command.length() > 0 && isspace(command[0]))                  command = command.substr(1, command.length()-1);
-      while (command.length() > 0 && isspace(command[command.length()-1])) command = command.substr(0, command.length()-1);
+   // Strip whitespace off the ends of the command-line string
+   // HKCU/.../Run won't run a command that has a trailing space
+   // after it.
+   wstring command(GetCommandLine());
+   while (command.length() > 0 && isspace(command[0]))                  command = command.substr(1, command.length()-1);
+   while (command.length() > 0 && isspace(command[command.length()-1])) command = command.substr(0, command.length()-1);
 
-      r.Write (m_app_name, command);
-   }
+   r.Write(L"DesktopSaver", command);
 }
 
 PollRate DesktopSaver::read_poll_rate() const
 {
-   Registry r(Registry::CurrentUser, m_app_name, L"");
+   const int pollRate = Registry(Registry::CurrentUser, L"DesktopSaver").Read(L"poll_rate", (int)Interval2);
+   if (pollRate < 0 || pollRate >= PollRate_Max) return Interval2;
 
-   int poll_rate;
-
-   r.Read(L"poll_rate", &poll_rate, (int)DefaultPollRate);
-
-   // Force to our enumeration values ONLY
-   switch (poll_rate)
-   {
-   case DisableHistory:
-   case PollEndpoints:
-   case Interval1:
-   case Interval2:
-   case Interval3:
-   case Interval4:
-      return (PollRate)poll_rate;
-
-   default:
-      return DefaultPollRate;
-   }
-
+   return static_cast<PollRate>(pollRate);
 }
 
 void DesktopSaver::SetPollRate(PollRate r)
@@ -422,7 +378,7 @@ void DesktopSaver::SetPollRate(PollRate r)
 
 void DesktopSaver::write_poll_rate()
 {
-   Registry r(Registry::CurrentUser, m_app_name, L"");
+   Registry r(Registry::CurrentUser, L"DesktopSaver", L"");
    r.Write(L"poll_rate", (int)m_rate);
 }
 
@@ -450,12 +406,7 @@ unsigned int DesktopSaver::GetPollRateMilliseconds() const
    return timer_delay;
 }
 
-std::wstring DesktopSaver::GetAutostartProfileName() const
+wstring DesktopSaver::GetAutostartProfileName() const
 {
-   Registry r(Registry::CurrentUser, m_app_name, L"");
-
-   std::wstring name;
-   r.Read(L"profile_autostart", &name, L"");
-
-   return name;
+   return Registry(Registry::CurrentUser, L"DesktopSaver").Read(L"profile_autostart", wstring());
 }
