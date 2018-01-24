@@ -2,8 +2,9 @@
 ; This is an NSIS installer script for DesktopSaver
 ;
 
-!include "MUI.nsh"
-!include "x64.nsh"
+!include MUI.nsh
+!include x64.nsh
+!include FileFunc.nsh
 
 !define VERSION 3.2
 
@@ -11,6 +12,15 @@ Name "DesktopSaver ${VERSION}"
 OutFile "DesktopSaver-${VERSION}-installer.exe"
 InstallDir $PROGRAMFILES\DesktopSaver
 BrandingText " "
+
+VIProductVersion ${VERSION}.0.0
+VIAddVersionKey ProductName "DesktopSaver ${VERSION}"
+VIAddVersionKey CompanyName "Nicholas Piegdon"
+VIAddVersionKey LegalCopyright "Copyright (c) Nicholas Piegdon"
+VIAddVersionKey FileDescription "DesktopSaver ${VERSION} Installer"
+VIAddVersionKey FileVersion ${VERSION}.0.0
+VIAddVersionKey ProductVersion ${VERSION}.0.0
+VIAddVersionKey InternalName "DesktopSaver ${VERSION} Installer"
 
 SetCompressor /SOLID lzma
 
@@ -92,6 +102,21 @@ SectionIn RO
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\DesktopSaver" "DisplayName" "DesktopSaver (remove only)"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\DesktopSaver" "UninstallString" '"$INSTDIR\uninstall.exe"'
   WriteUninstaller "uninstall.exe"
+
+  ; Write the uninstall keys for Windows
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\DesktopSaver" "DisplayName" "DesktopSaver"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\DesktopSaver" "UninstallString" '"$INSTDIR\uninstall.exe"'
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\DesktopSaver" "QuietUninstallString" '"$INSTDIR\uninstall.exe" /S'
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\DesktopSaver" "DisplayIcon" '"$INSTDIR\DesktopSaver.exe",0'
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\DesktopSaver" "Publisher" "Nicholas Piegdon"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\DesktopSaver" "URLInfoAbout" 'http://github.com/npiegdon/desktop-saver'
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\DesktopSaver" "DisplayVersion" '${VERSION}'
+  WriteRegDword HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\DesktopSaver" "NoModify" 1
+  WriteRegDword HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\DesktopSaver" "NoRepair" 1
+
+  ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
+  IntFmt $0 "0x%08X" $0
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\DesktopSaver" "EstimatedSize" "$0"
 
 SectionEnd
 
